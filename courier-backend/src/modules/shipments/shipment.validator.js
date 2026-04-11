@@ -1,0 +1,26 @@
+const { z } = require("zod");
+const { PROVIDERS } = require("../../config/constants");
+
+const addressSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(10),
+  address: z.string().min(1),
+  city: z.string().min(1),
+});
+
+exports.createShipmentSchema = z.object({
+  sender: addressSchema,
+  receiver: addressSchema,
+  weight: z.number().positive(),
+  packageType: z.enum(["parcel", "envelope", "pallet"]).optional(),
+  description: z.string().optional(),
+  provider: z.enum(Object.values(PROVIDERS)),
+  isCOD: z.boolean().optional(),
+  codAmount: z.number().min(0).optional(),
+  notes: z.string().optional(),
+});
+
+exports.updateStatusSchema = z.object({
+  status: z.enum(["booked", "received", "in_transit", "out_for_delivery", "delivered", "failed", "cancelled"]),
+  note: z.string().optional(),
+});
