@@ -58,7 +58,7 @@ const getShipmentById = async (id, companyId) => {
 
 const getShipmentWithHistory = async (id, companyId) => {
     const shipment = await getShipmentById(id, companyId);
-    const history = await statusHistory.getByShipment(id);
+    const history = await statusHistory.getHistory(id);
     return { ...shipment, history };
 };
 

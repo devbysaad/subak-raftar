@@ -14,7 +14,7 @@ const addressSchema = new mongoose.Schema(
 const shipmentSchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     sender: { type: addressSchema, required: true },
     receiver: { type: addressSchema, required: true },
     weight: { type: Number, required: true },
