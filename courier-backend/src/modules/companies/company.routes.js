@@ -11,7 +11,7 @@ router.get("/me", ctrl.getMyCompany);
 router.patch("/me/shopify", ctrl.updateShopifyKeys);
 router.patch("/me/providers/:provider", ctrl.updateProviderKey);
 
-router.post("/", requireRole(ROLES.ADMIN), ctrl.createCompany);
+router.post("/", ctrl.createCompany);
 router.get("/", requireRole(ROLES.ADMIN), ctrl.getAllCompanies);
 router.patch("/:id", requireRole(ROLES.ADMIN), ctrl.updateCompany);
 

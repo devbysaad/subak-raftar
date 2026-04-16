@@ -1,7 +1,17 @@
 const userService = require("./user.service");
 const { success, failure } = require("../../utils/response.utils");
 
+// Returns the currently authenticated user (set by authMiddleware)
+const getMe = async (req, res) => {
+    try {
+        res.json(success(req.user));
+    } catch (err) {
+        res.status(500).json(failure(err.message));
+    }
+};
+
 const getUsers = async (req, res) => {
+
     try {
         const users = await userService.getAllUsers(req.user.companyId);
         res.json(success(users));
@@ -44,4 +54,4 @@ const deactivateUser = async (req, res) => {
     }
 };
 
-module.exports = { getUsers, getUserById, updateUser, deactivateUser };
+module.exports = { getMe, getUsers, getUserById, updateUser, deactivateUser };

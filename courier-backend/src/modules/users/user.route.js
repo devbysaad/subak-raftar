@@ -2,10 +2,13 @@ const { Router } = require("express");
 const authMiddleware = require("../../middleware/auth.middleware");
 const { requireRole } = require("../../middleware/role.middleware");
 const { ROLES } = require("../../config/constants");
-const { getUsers, getUserById, updateUser, deactivateUser } = require("./user.controller");
+const { getUsers, getUserById, getMe, updateUser, deactivateUser } = require("./user.controller");
 
 const router = Router();
 router.use(authMiddleware);
+
+// Must be BEFORE /:id to avoid matching 'me' as an ID
+router.get("/me", getMe);
 
 router.get("/", requireRole(ROLES.ADMIN), getUsers);
 router.get("/:id", requireRole(ROLES.ADMIN), getUserById);
