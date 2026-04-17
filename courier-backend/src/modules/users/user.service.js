@@ -1,59 +1,62 @@
 const User = require("./user.model");
 
-const UPDATABLE_FIELDS = ["name", "phone", "isActive"];
+const UPDATABLE_FIELDS = ["name", "phone", "isActive", "role"];
 
-const getAllUsers = async (companyId) => {
-    const filter = companyId ? { companyId } : {};
-    return User.find(filter).lean();
+const getAllUsers = async () => {
+    return User.find().lean();
 };
 
-const getUserById = async (id, companyId) => {
-    const filter = companyId ? { _id: id, companyId } : { _id: id };
-    return User.findOne(filter).lean();
+const getUserById = async (id) => {
+    return User.findById(id).lean();
 };
 
-const updateUserInCompany = async (id, companyId, data) => {
+const createUser = async ({ name, email, phone, role }) => {
+    const exists = await User.findOne({ email: email.toLowerCase() }).lean();
+    if (exists) throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
+
+    const user = await User.create({ name, email, phone, role: role || "employee" });
+    return user.toObject();
+};
+
+const updateUser = async (id, data) => {
     const safeData = {};
     UPDATABLE_FIELDS.forEach((field) => {
         if (data[field] !== undefined) safeData[field] = data[field];
     });
 
-    const filter = companyId ? { _id: id, companyId } : { _id: id };
-
-    const updated = await User.findOneAndUpdate(filter, safeData, {
+    const updated = await User.findByIdAndUpdate(id, safeData, {
         new: true,
         runValidators: true,
     }).lean();
 
-    if (!updated) throw new Error("User not found or access denied");
+    if (!updated) throw new Error("User not found");
     return updated;
 };
 
-const deactivateUser = async (id, companyId) => {
-    const filter = companyId ? { _id: id, companyId } : { _id: id };
-
-    const updated = await User.findOneAndUpdate(
-        filter,
+const deactivateUser = async (id) => {
+    const updated = await User.findByIdAndUpdate(
+        id,
         { isActive: false },
         { new: true }
     ).lean();
 
-    if (!updated) throw new Error("User not found or access denied");
+    if (!updated) throw new Error("User not found");
     return updated;
 };
 
-const findOrCreateFromAuth = async ({ authId, name, email, role, companyId }) => {
+const findOrCreateFromAuth = async ({ authId, name, email }) => {
     let user = await User.findOne({ authId }).lean();
     if (user) return user;
 
-    user = await User.create({ authId, name, email, role, companyId });
+    user = await User.create({ authId, name, email });
     return user.toObject();
 };
 
 module.exports = {
     getAllUsers,
     getUserById,
-    updateUserInCompany,
+    createUser,
+    updateUser,
     deactivateUser,
     findOrCreateFromAuth,
 };

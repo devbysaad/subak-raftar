@@ -66,7 +66,7 @@ const SignupForm: React.FC = () => {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link to={ROUTES.LOGIN} className="text-orange-500 hover:text-orange-600 font-medium">
+        <Link to={ROUTES.LOGIN} className="text-[#00684A] hover:text-[#00ED64] font-bold transition-colors">
           Sign in
         </Link>
       </p>

@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '@/hooks/useRedux';
 import { loginRequest, clearError } from '@/redux/slice/authSlice';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +11,10 @@ const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(clearError());
@@ -20,7 +22,7 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <Input
         id="login-email"
         label="Email address"
@@ -29,7 +31,7 @@ const LoginForm: React.FC = () => {
         autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@example.com"
+        placeholder="you@subakraftar.com"
       />
       <Input
         id="login-password"
@@ -52,11 +54,8 @@ const LoginForm: React.FC = () => {
         Sign in
       </Button>
 
-      <p className="text-center text-sm text-gray-500">
-        Don't have an account?{' '}
-        <Link to={ROUTES.SIGNUP} className="text-orange-500 hover:text-orange-600 font-medium">
-          Create account
-        </Link>
+      <p className="text-center text-xs text-[#5C6C75]">
+        This is a private internal system. Contact your admin for access.
       </p>
     </form>
   );

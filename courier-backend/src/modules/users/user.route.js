@@ -2,16 +2,18 @@ const { Router } = require("express");
 const authMiddleware = require("../../middleware/auth.middleware");
 const { requireRole } = require("../../middleware/role.middleware");
 const { ROLES } = require("../../config/constants");
-const { getUsers, getUserById, getMe, updateUser, deactivateUser } = require("./user.controller");
+const { getMe, getUsers, createUser, getUserById, updateUser, deactivateUser } = require("./user.controller");
 
 const router = Router();
 router.use(authMiddleware);
 
-// Must be BEFORE /:id to avoid matching 'me' as an ID
+// Any authenticated user
 router.get("/me", getMe);
 
-router.get("/", requireRole(ROLES.ADMIN), getUsers);
-router.get("/:id", requireRole(ROLES.ADMIN), getUserById);
+// Admin only — user management
+router.get("/",      requireRole(ROLES.ADMIN), getUsers);
+router.post("/",     requireRole(ROLES.ADMIN), createUser);
+router.get("/:id",   requireRole(ROLES.ADMIN), getUserById);
 router.patch("/:id", requireRole(ROLES.ADMIN), updateUser);
 router.patch("/:id/deactivate", requireRole(ROLES.ADMIN), deactivateUser);
 

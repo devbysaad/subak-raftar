@@ -55,11 +55,7 @@ const AdminShipmentsTable: React.FC = () => {
         </span>
       ),
     },
-    {
-      key: 'companyName',
-      header: 'Company',
-      render: (row) => <span className="text-gray-600">{row.companyName || '—'}</span>,
-    },
+
     {
       key: 'receiver',
       header: 'Receiver',

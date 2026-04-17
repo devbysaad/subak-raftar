@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { verifyShopifyWebhook, handleFulfillmentWebhook } = require("./shopify.service");
-const Company = require("../companies/company.model");
-const { success, failure } = require("../../utils/response.util");
+const Settings = require("../settings/settings.model");
+const { success, failure } = require("../../utils/response.utils");
 
 const router = Router();
 

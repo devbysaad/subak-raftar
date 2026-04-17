@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const Shipment = require("../shipments/shipment.model");
-const Company = require("../companies/company.model");
+const Settings = require("../settings/settings.model");
 const { getAdapter } = require("../provider/provider.factory");
 const statusHistoryService = require("../status-history/statusHistory.service");
 
@@ -46,15 +46,15 @@ const handleFulfillmentWebhook = async (companyId, order) => {
     return exists;
   }
 
-  const company = await Company.findById(companyId).lean();
-  if (!company) throw new Error("Company not found");
+  const settings = await Settings.findOne().lean();
+  if (!settings) throw new Error("System settings not configured");
 
   // use first available provider that has keys, fallback to self
-  const provider = Object.keys(company.providerKeys || {}).find(
-    (p) => company.providerKeys[p]?.apiKey
+  const provider = Object.keys(settings.providerKeys || {}).find(
+    (p) => settings.providerKeys[p]?.apiKey
   ) || "self";
 
-  const keys = company.providerKeys?.[provider] || {};
+  const keys = settings.providerKeys?.[provider] || {};
   const adapter = getAdapter(provider, keys);
   const shipmentData = mapOrderToShipment(order);
   const booking = await adapter.bookShipment(shipmentData, companyId);

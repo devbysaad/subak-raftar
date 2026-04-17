@@ -1,10 +1,9 @@
 const shipmentService = require("./shipment.service");
 const { success, failure } = require("../../utils/response.utils");
-const { ROLES } = require("../../config/constants");
 
 const create = async (req, res) => {
     try {
-        const shipment = await shipmentService.createShipment(req.body, req.user.companyId, req.user._id);
+        const shipment = await shipmentService.createShipment(req.body, req.user._id);
         res.status(201).json(success(shipment, "Shipment created"));
     } catch (err) {
         res.status(err.status || 500).json(failure(err.message));
@@ -13,8 +12,7 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
     try {
-        const companyId = req.user.role === ROLES.ADMIN ? null : req.user.companyId;
-        const data = await shipmentService.getShipments(companyId, req.query);
+        const data = await shipmentService.getShipments(req.query);
         res.json(success(data));
     } catch (err) {
         res.status(500).json(failure(err.message));
@@ -23,8 +21,7 @@ const list = async (req, res) => {
 
 const detail = async (req, res) => {
     try {
-        const companyId = req.user.role === ROLES.ADMIN ? null : req.user.companyId;
-        const shipment = await shipmentService.getShipmentWithHistory(req.params.id, companyId);
+        const shipment = await shipmentService.getShipmentWithHistory(req.params.id);
         res.json(success(shipment));
     } catch (err) {
         res.status(err.status || 500).json(failure(err.message));
@@ -43,11 +40,39 @@ const updateStatus = async (req, res) => {
 
 const cancel = async (req, res) => {
     try {
-        const shipment = await shipmentService.cancelShipment(req.params.id, req.user.companyId, req.user._id);
+        const shipment = await shipmentService.cancelShipment(req.params.id, req.user._id);
         res.json(success(shipment, "Shipment cancelled"));
     } catch (err) {
         res.status(err.status || 500).json(failure(err.message));
     }
 };
 
-module.exports = { create, list, detail, updateStatus, cancel };
+const bulkCreate = async (req, res) => {
+    try {
+        const items = Array.isArray(req.body) ? req.body : req.body.shipments;
+        if (!items || items.length === 0) {
+            return res.status(400).json(failure("No shipment data provided"));
+        }
+
+        const created = [];
+        const errors  = [];
+
+        for (let i = 0; i < items.length; i++) {
+            try {
+                const shipment = await shipmentService.createShipment(items[i], req.user._id);
+                created.push(shipment);
+            } catch (err) {
+                errors.push({ row: i + 1, error: err.message, data: items[i] });
+            }
+        }
+
+        res.status(207).json(success(
+            { created: created.length, failed: errors.length, errors },
+            `${created.length} shipments created, ${errors.length} failed`
+        ));
+    } catch (err) {
+        res.status(500).json(failure(err.message));
+    }
+};
+
+module.exports = { create, list, detail, updateStatus, cancel, bulkCreate };

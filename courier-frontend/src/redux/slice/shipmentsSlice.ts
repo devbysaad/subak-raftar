@@ -13,23 +13,17 @@ export type Provider = 'tcs' | 'leopards' | 'trax' | 'mp' | 'self';
 
 export interface Shipment {
   _id: string;
-  companyId: string;
   createdBy: string;
-  sender: {
-    name: string;
-    phone: string;
-    address: string;
-    city: string;
-  };
   receiver: {
     name: string;
     phone: string;
     address: string;
     city: string;
+    email?: string;
   };
   weight: number;
-  packageType: string;
-  description: string;
+  itemType?: string;
+  quantity?: number;
   provider: Provider;
   providerTrackingNo: string;
   status: ShipmentStatus;
@@ -38,10 +32,9 @@ export interface Shipment {
   codStatus: string;
   shopifyOrderId?: string;
   notes?: string;
+  specialInstruction?: string;
   createdAt: string;
   updatedAt: string;
-  // Admin populated
-  companyName?: string;
 }
 
 export interface ShipmentHistory {
@@ -67,6 +60,7 @@ interface ShipmentsState {
   list: Shipment[];
   total: number;
   current: Shipment | null;
+  lastCreated: Shipment | null;
   history: ShipmentHistory[];
   filters: ShipmentFilters;
   loading: boolean;
@@ -83,15 +77,9 @@ const initialState: ShipmentsState = {
   list: [],
   total: 0,
   current: null,
+  lastCreated: null,
   history: [],
-  filters: {
-    status: '',
-    provider: '',
-    isCOD: '',
-    search: '',
-    page: 1,
-    limit: 20,
-  },
+  filters: { status: '', provider: '', isCOD: '', search: '', page: 1, limit: 20 },
   loading: false,
   loadingDetail: false,
   loadingCreate: false,
@@ -136,16 +124,20 @@ const shipmentsSlice = createSlice({
       state.errorDetail = action.payload;
     },
 
-    // Create shipment
     createShipmentRequest(state, _action: PayloadAction<Partial<Shipment>>) {
+      state.loading = true;
       state.loadingCreate = true;
       state.createError = null;
+      state.lastCreated = null;
     },
     createShipmentSuccess(state, action: PayloadAction<Shipment>) {
       state.list.unshift(action.payload);
+      state.lastCreated = action.payload;
+      state.loading = false;
       state.loadingCreate = false;
     },
     createShipmentFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
       state.loadingCreate = false;
       state.createError = action.payload;
     },

@@ -1,38 +1,31 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '@/components/ui/Sidebar';
-import Navbar from '@/components/ui/Navbar';
-import { useAppSelector } from '@/hooks/useRedux';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/dashboard/shipments': 'Shipments',
-  '/dashboard/shipments/create': 'Create Shipment',
-  '/dashboard/admin': 'Admin Panel',
+  '/dashboard':              'Dashboard',
+  '/dashboard/book-parcel':  'Book Parcel',
+  '/dashboard/invoices':     'View Invoices',
+  '/dashboard/load-sheet':   'Create Load Sheet',
+  '/dashboard/complaints':   'Add Complain',
+  '/dashboard/admin':        'Admin Panel',
+  '/dashboard/admin/users':  'Admin Panel — Users',
+  '/dashboard/admin/settings': 'Admin Panel — Settings',
 };
 
-function getTitle(pathname: string) {
-  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  if (pathname.startsWith('/dashboard/shipments/') && pathname !== '/dashboard/shipments/create') {
-    return 'Shipment Detail';
-  }
-  return 'Dashboard';
-}
-
 const Dashboard: React.FC = () => {
-  const collapsed = useAppSelector((state) => state.ui.sidebarCollapsed);
   const location = useLocation();
-  const title = getTitle(location.pathname);
+  const title = PAGE_TITLES[location.pathname] ?? 'Dashboard';
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[#f5f5f5]">
       <Sidebar />
-      <div
-        className="flex-1 flex flex-col min-h-screen transition-all duration-200"
-        style={{ marginLeft: collapsed ? 64 : 240 }}
-      >
-        <Navbar title={title} />
-        <main className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: 220 }}>
+        {/* Top bar */}
+        <header className="h-[56px] bg-white border-b border-gray-200 flex items-center px-6 sticky top-0 z-20">
+          <h1 className="text-base font-semibold text-gray-800">{title}</h1>
+        </header>
+        <main className="flex-1 p-5 overflow-auto">
           <Outlet />
         </main>
       </div>

@@ -3,7 +3,7 @@ const authMiddleware = require("../../middleware/auth.middleware");
 const { requireRole } = require("../../middleware/role.middleware");
 const validate = require("../../middleware/validate.middleware");
 const statusHistoryService = require("../status-history/statusHistory.service");
-const { success, failure } = require("../../utils/response.util");
+const { success, failure } = require("../../utils/response.utils");
 const { ROLES } = require("../../config/constants");
 const { createShipmentSchema, updateStatusSchema } = require("./shipment.validator");
 const ctrl = require("./shipment.controller");
@@ -11,12 +11,14 @@ const ctrl = require("./shipment.controller");
 const router = Router();
 router.use(authMiddleware);
 
-router.get("/", ctrl.list);
-router.get("/:id", ctrl.detail);
-router.post("/", validate(createShipmentSchema), ctrl.create);
-router.patch("/:id/status", requireRole(ROLES.ADMIN), validate(updateStatusSchema), ctrl.updateStatus);
-router.patch("/:id/cancel", ctrl.cancel);
-router.get("/:id/history", async (req, res) => {
+router.get("/",    ctrl.list);
+router.post("/",   validate(createShipmentSchema), ctrl.create);
+router.post("/bulk", ctrl.bulkCreate);
+
+router.get("/:id",           ctrl.detail);
+router.patch("/:id/status",  requireRole(ROLES.ADMIN), validate(updateStatusSchema), ctrl.updateStatus);
+router.patch("/:id/cancel",  ctrl.cancel);
+router.get("/:id/history",  async (req, res) => {
     try {
         const history = await statusHistoryService.getHistory(req.params.id);
         res.json(success(history));
@@ -24,4 +26,5 @@ router.get("/:id/history", async (req, res) => {
         res.status(500).json(failure(err.message));
     }
 });
+
 module.exports = router;

@@ -1,14 +1,14 @@
 import { useAppSelector } from './useRedux';
 
 export const useAuth = () => {
-  const user = useAppSelector((state) => state.auth.user);
+  const user    = useAppSelector((state) => state.auth.user);
   const loading = useAppSelector((state) => state.auth.loading);
-  const error = useAppSelector((state) => state.auth.error);
+  const error   = useAppSelector((state) => state.auth.error);
   const initialized = useAppSelector((state) => state.auth.initialized);
 
-  const isAdmin = user?.role === 'admin';
   const isAuthenticated = !!user;
-  const hasCompany = !!user?.companyId;
+  const isAdmin    = user?.role === 'admin';
+  const isEmployee = user?.role === 'employee';
 
-  return { user, loading, error, initialized, isAdmin, isAuthenticated, hasCompany };
+  return { user, loading, error, initialized, isAuthenticated, isAdmin, isEmployee };
 };

@@ -1,6 +1,6 @@
 const ROLES = {
     ADMIN: "admin",
-    CUSTOMER: "customer",
+    EMPLOYEE: "employee",
 };
 
 const SHIPMENT_STATUS = {

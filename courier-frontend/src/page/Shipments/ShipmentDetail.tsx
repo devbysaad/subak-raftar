@@ -103,23 +103,14 @@ const ShipmentDetail: React.FC = () => {
         )}
       </div>
 
-      {/* Sender + Receiver */}
+      {/* Booking Info + Receiver */}
       <div className="grid grid-cols-2 gap-5">
         <div className={sectionClass}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Sender</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Booking Info</p>
           <div className="space-y-3">
-            <div className="flex items-start gap-2.5">
-              <User size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Name" value={current.sender.name} />
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Phone size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Phone" value={current.sender.phone} />
-            </div>
-            <div className="flex items-start gap-2.5">
-              <MapPin size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Address" value={`${current.sender.address}, ${current.sender.city}`} />
-            </div>
+            <InfoRow label="Created By" value={String(current.createdBy ?? '—')} />
+            <InfoRow label="Provider" value={<span className="uppercase font-semibold">{current.provider}</span>} />
+            <InfoRow label="Status" value={<StatusBadge status={current.status} />} />
           </div>
         </div>
 
@@ -128,15 +119,15 @@ const ShipmentDetail: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-start gap-2.5">
               <User size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Name" value={current.receiver.name} />
+              <InfoRow label="Name" value={current.receiver?.name ?? '—'} />
             </div>
             <div className="flex items-start gap-2.5">
               <Phone size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Phone" value={current.receiver.phone} />
+              <InfoRow label="Phone" value={current.receiver?.phone ?? '—'} />
             </div>
             <div className="flex items-start gap-2.5">
               <MapPin size={14} className="text-gray-400 mt-0.5" />
-              <InfoRow label="Address" value={`${current.receiver.address}, ${current.receiver.city}`} />
+              <InfoRow label="Address" value={`${current.receiver?.address ?? ''}, ${current.receiver?.city ?? ''}`} />
             </div>
           </div>
         </div>
@@ -150,7 +141,8 @@ const ShipmentDetail: React.FC = () => {
         </div>
         <div className="grid grid-cols-4 gap-6">
           <InfoRow label="Weight" value={`${current.weight} kg`} />
-          <InfoRow label="Package Type" value={current.packageType} />
+          <InfoRow label="Item Type" value={current.itemType ?? '—'} />
+          <InfoRow label="Quantity" value={current.quantity ?? 1} />
           <InfoRow
             label="COD"
             value={
@@ -161,11 +153,10 @@ const ShipmentDetail: React.FC = () => {
               )
             }
           />
-          {current.codStatus && <InfoRow label="COD Status" value={current.codStatus} />}
         </div>
-        {current.description && (
+        {current.specialInstruction && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <InfoRow label="Description" value={current.description} />
+            <InfoRow label="Special Instruction" value={current.specialInstruction} />
           </div>
         )}
         {current.notes && (

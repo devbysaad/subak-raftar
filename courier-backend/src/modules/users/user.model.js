@@ -1,15 +1,13 @@
 const mongoose = require("mongoose");
-const { ROLES } = require("../../config/constants");
 
 const userSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true, trim: true },
-        email: { type: String, required: true, unique: true, lowercase: true },
-        role: { type: String, enum: Object.values(ROLES), default: ROLES.CUSTOMER },
-        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+        name:     { type: String, required: true, trim: true },
+        email:    { type: String, required: true, unique: true, lowercase: true },
+        role:     { type: String, enum: ["admin", "employee"], default: "employee" },
         isActive: { type: Boolean, default: true },
-        phone: { type: String },
-        authId: { type: String, unique: true, sparse: true },
+        phone:    { type: String },
+        authId:   { type: String, unique: true, sparse: true },
     },
     { timestamps: true }
 );
