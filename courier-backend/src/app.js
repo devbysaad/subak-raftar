@@ -2,7 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const errorMiddleware = require("./middleware/error.middleware");
-const { startTrackingCron } = require("./modules/tracking/tracking.cron");
+// NOTE: tracking cron is started in server.js (local dev only) — not here
+// because Vercel serverless has no persistent process for cron jobs
 
 const authRoutes        = require("./modules/auth/auth.routes");
 const userRoutes        = require("./modules/users/user.route");
@@ -49,7 +50,5 @@ app.use("/api/invoices",     invoiceRoutes);
 app.use("/api/integrations", integrationRoutes);
 
 app.use(errorMiddleware);
-
-startTrackingCron();
 
 module.exports = app;
