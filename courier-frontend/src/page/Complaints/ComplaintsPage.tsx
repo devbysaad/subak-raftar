@@ -21,8 +21,10 @@ export default function ComplaintsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
 
-  const [search, setSearch] = useState({ parcelNo: '', rStatus: '', cStatus: '', fromDate: '', toDate: '' });
+  const [search, setSearch] = useState({ parcelNo: '', rStatus: '', cStatus: '', fromDate: '', toDate: '', page: 1 });
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal]           = useState(0);
   const [loading, setLoading]       = useState(false);
   const [searched, setSearched]     = useState(false);
 
@@ -51,13 +53,16 @@ export default function ComplaintsPage() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (override?: Partial<typeof search>) => {
     setLoading(true);
     setSearched(true);
     try {
-      const params = Object.fromEntries(Object.entries(search).filter(([,v]) => v));
+      const currentSearch = { ...search, ...override };
+      const params = Object.fromEntries(Object.entries(currentSearch).filter(([,v]) => v));
       const res = await axiosInstance.get(API.COMPLAINTS.LIST, { params });
       setComplaints(res.data?.data?.items ?? []);
+      setTotalPages(res.data?.data?.pages ?? 1);
+      setTotal(res.data?.data?.total ?? 0);
     } finally {
       setLoading(false);
     }
@@ -159,7 +164,7 @@ export default function ComplaintsPage() {
                 <label className={labelCls}><Calendar size={10} className="inline mr-1" />To Date</label>
                 <input type="date" className={inputCls} value={search.toDate} onChange={e => setSearch(s => ({...s, toDate: e.target.value}))} />
               </div>
-              <Button onClick={handleSearch} loading={loading} size="sm">
+              <Button onClick={() => { setSearch(s => ({ ...s, page: 1 })); handleSearch({ page: 1 }); }} loading={loading} size="sm">
                 <Search size={13} /> Search
               </Button>
             </div>
@@ -211,6 +216,39 @@ export default function ComplaintsPage() {
                       ))}
                     </tbody>
                   </table>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">
+                        Page {search.page} of {totalPages} · {total} complaints
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary" size="sm"
+                          disabled={search.page <= 1}
+                          onClick={() => {
+                            const newPage = search.page - 1;
+                            setSearch(s => ({ ...s, page: newPage }));
+                            handleSearch({ page: newPage });
+                          }}
+                        >
+                          Prev
+                        </Button>
+                        <Button
+                          variant="secondary" size="sm"
+                          disabled={search.page >= totalPages}
+                          onClick={() => {
+                            const newPage = search.page + 1;
+                            setSearch(s => ({ ...s, page: newPage }));
+                            handleSearch({ page: newPage });
+                          }}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             )}
