@@ -14,11 +14,11 @@ const addressSchema = new mongoose.Schema(
 const shipmentSchema = new mongoose.Schema(
   {
     createdBy:          { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    sender:             { type: addressSchema, required: true },
     receiver:           { type: addressSchema, required: true },
     weight:             { type: Number, required: true },
-    packageType:        { type: String, enum: ["parcel", "envelope", "pallet"], default: "parcel" },
-    description:        { type: String },
+    itemType:           { type: String },
+    quantity:           { type: Number, default: 1 },
+    specialInstruction: { type: String },
     provider:           { type: String, enum: Object.values(PROVIDERS), required: true },
     providerTrackingNo: { type: String },
     providerRef:        { type: String },

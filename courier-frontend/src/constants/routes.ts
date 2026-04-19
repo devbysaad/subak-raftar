@@ -5,6 +5,7 @@ export const ROUTES = {
   INVOICES:       '/dashboard/invoices',
   LOAD_SHEET:     '/dashboard/load-sheet',
   COMPLAINTS:     '/dashboard/complaints',
+  COURIER_PERFORMANCE: '/dashboard/couriers',
   ADMIN:          '/dashboard/admin',
   ADMIN_USERS:    '/dashboard/admin/users',
   ADMIN_SETTINGS: '/dashboard/admin/settings',

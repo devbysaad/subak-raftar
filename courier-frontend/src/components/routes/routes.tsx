@@ -12,6 +12,7 @@ import ShipmentDetail from '@/page/Shipments/ShipmentDetail';
 import InvoicesPage   from '@/page/Invoices/InvoicesPage';
 import LoadSheetPage  from '@/page/LoadSheet/LoadSheetPage';
 import ComplaintsPage from '@/page/Complaints/ComplaintsPage';
+import CourierPerformance from '@/page/Analytics/CourierPerformance';
 import UsersPage      from '@/page/Admin/UsersPage';
 import AdminDashboard from '@/page/Admin/AdminDashboard';
 
@@ -36,6 +37,7 @@ const AppRoutes: React.FC = () => (
       <Route path="invoices"      element={<InvoicesPage />} />
       <Route path="load-sheet"    element={<LoadSheetPage />} />
       <Route path="complaints"    element={<ComplaintsPage />} />
+      <Route path="couriers"      element={<CourierPerformance />} />
 
       {/* Admin-only routes */}
       <Route

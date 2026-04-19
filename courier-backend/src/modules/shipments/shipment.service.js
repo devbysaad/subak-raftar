@@ -83,6 +83,47 @@ const cancelShipment = async (id, userId) => {
     return updateStatus(id, "cancelled", userId, "Cancelled by user");
 };
 
+const getCourierAnalytics = async () => {
+    const pipeline = [
+        {
+            $group: {
+                _id: "$provider",
+                totalBooked: { $sum: 1 },
+                totalDelivered: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+                totalFailed: { $sum: { $cond: [{ $in: ["$status", ["failed", "cancelled"]] }, 1, 0] } },
+                totalInTransit: { $sum: { $cond: [{ $in: ["$status", ["in_transit", "out_for_delivery", "received"]] }, 1, 0] } }
+            }
+        },
+        {
+            $project: {
+                provider: "$_id",
+                _id: 0,
+                totalBooked: 1,
+                totalDelivered: 1,
+                totalFailed: 1,
+                totalInTransit: 1,
+                deliveryRatio: {
+                    $cond: [
+                        { $eq: ["$totalBooked", 0] },
+                        0,
+                        { $multiply: [{ $divide: ["$totalDelivered", "$totalBooked"] }, 100] }
+                    ]
+                },
+                returnRatio: {
+                    $cond: [
+                        { $eq: ["$totalBooked", 0] },
+                        0,
+                        { $multiply: [{ $divide: ["$totalFailed", "$totalBooked"] }, 100] }
+                    ]
+                }
+            }
+        },
+        { $sort: { deliveryRatio: -1 } }
+    ];
+
+    return Shipment.aggregate(pipeline);
+};
+
 module.exports = {
     createShipment,
     getShipments,
@@ -90,4 +131,5 @@ module.exports = {
     getShipmentWithHistory,
     updateStatus,
     cancelShipment,
+    getCourierAnalytics,
 };

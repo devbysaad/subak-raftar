@@ -9,11 +9,11 @@ const addressSchema = z.object({
 });
 
 exports.createShipmentSchema = z.object({
-  sender: addressSchema,
   receiver: addressSchema,
   weight: z.number().positive(),
-  packageType: z.enum(["parcel", "envelope", "pallet"]).optional(),
-  description: z.string().optional(),
+  itemType: z.string().optional(),
+  quantity: z.number().positive().optional(),
+  specialInstruction: z.string().optional(),
   provider: z.enum(Object.values(PROVIDERS)),
   isCOD: z.boolean().optional(),
   codAmount: z.number().min(0).optional(),

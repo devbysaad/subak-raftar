@@ -12,6 +12,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/",    ctrl.list);
+router.get("/analytics/couriers", ctrl.getAnalytics);
 router.post("/",   validate(createShipmentSchema), ctrl.create);
 router.post("/bulk", ctrl.bulkCreate);
 

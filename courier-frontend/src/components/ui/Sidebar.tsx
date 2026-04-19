@@ -63,6 +63,11 @@ const Sidebar: React.FC = () => {
           Add Complain
         </NavLink>
 
+        <NavLink to={ROUTES.COURIER_PERFORMANCE} className={linkClass}>
+          <span className="text-green-600 font-bold text-xs leading-none">»</span>
+          Courier Analytics
+        </NavLink>
+
         {/* Admin section */}
         {isAdmin && (
           <div className="mt-1">

@@ -26,6 +26,7 @@ export const API = {
     HISTORY:      (id: string) => `/api/shipments/${id}/history`,
     UPDATE_STATUS:(id: string) => `/api/shipments/${id}/status`,
     CANCEL:       (id: string) => `/api/shipments/${id}/cancel`,
+    ANALYTICS:    '/api/shipments/analytics/couriers',
   },
   LOAD_SHEETS: {
     LIST:   '/api/loadsheets',

@@ -19,6 +19,15 @@ const list = async (req, res) => {
     }
 };
 
+const getAnalytics = async (req, res) => {
+    try {
+        const data = await shipmentService.getCourierAnalytics();
+        res.json(success(data));
+    } catch (err) {
+        res.status(500).json(failure(err.message));
+    }
+};
+
 const detail = async (req, res) => {
     try {
         const shipment = await shipmentService.getShipmentWithHistory(req.params.id);
@@ -75,4 +84,4 @@ const bulkCreate = async (req, res) => {
     }
 };
 
-module.exports = { create, list, detail, updateStatus, cancel, bulkCreate };
+module.exports = { create, list, detail, updateStatus, cancel, bulkCreate, getAnalytics };
