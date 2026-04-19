@@ -2,8 +2,16 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { API } from '@/constants/api';
 import Button from '@/components/ui/Button';
+import Navbar from '@/components/ui/Navbar';
+import { FileSpreadsheet, Plus, Trash2, Printer, Search, Calendar, CheckCircle2, Package } from 'lucide-react';
 
-interface Sheet { _id: string; loadSheetNo: string; createdAt: string; parcelIds: unknown[]; createdBy: { name: string } }
+interface Sheet {
+  _id: string;
+  loadSheetNo: string;
+  createdAt: string;
+  parcelIds: unknown[];
+  createdBy: { name: string };
+}
 
 export default function LoadSheetPage() {
   const [parcelInput, setParcelInput] = useState('');
@@ -15,10 +23,15 @@ export default function LoadSheetPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch]   = useState({ loadSheetNo: '', fromDate: '', toDate: '' });
 
+  const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
+  const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1';
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && parcelInput.trim()) {
       e.preventDefault();
-      setParcelList(l => [...l, parcelInput.trim()]);
+      if (!parcelList.includes(parcelInput.trim())) {
+        setParcelList(l => [...l, parcelInput.trim()]);
+      }
       setParcelInput('');
     }
   };
@@ -32,6 +45,7 @@ export default function LoadSheetPage() {
       const res = await axiosInstance.post(API.LOAD_SHEETS.CREATE, { parcelIds: parcelList });
       setLastSheet(res.data?.data);
       setParcelList([]);
+      loadSheets(); // refresh the list below
     } finally {
       setCreating(false);
     }
@@ -50,82 +64,158 @@ export default function LoadSheetPage() {
 
   useEffect(() => { loadSheets(); }, []);
 
-  const fieldCls = "border border-gray-300 rounded px-3 py-2 text-sm bg-[#fafaf5] focus:ring-1 focus:ring-green-500 focus:outline-none";
-
   return (
-    <div className="space-y-4">
-      {/* Create */}
-      <div className="card p-5">
-        <h2 className="font-semibold text-sm text-gray-700 mb-3">Enter Parcel Here!</h2>
+    <div className="flex-1 flex flex-col min-h-screen bg-[#f5f5f5]">
+      <Navbar title="Load Sheets" />
 
-        {lastSheet && (
-          <div className="mb-3 bg-green-50 border border-green-200 rounded p-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-green-700">
-              ✓ Load Sheet Created: <span className="font-bold">{lastSheet.loadSheetNo}</span>
+      <main className="p-6 space-y-5">
+
+        {/* ── Create Load Sheet ── */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <FileSpreadsheet size={16} className="text-green-600" />
+            <h3 className="font-semibold text-sm text-gray-800">Create New Load Sheet</h3>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-gray-500 mb-4">
+              Type a parcel tracking number and press <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono border border-gray-200">Enter</kbd> to add it.
+              Once you've added all parcels, click <strong>Generate Load Sheet</strong>.
             </p>
-            <Button size="sm" variant="secondary">Print</Button>
-          </div>
-        )}
 
-        <div className="flex gap-2 mb-3">
-          <input
-            className={`${fieldCls} flex-1 text-base`}
-            placeholder="Type parcel number and press Enter..."
-            value={parcelInput}
-            onChange={e => setParcelInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <Button variant="secondary" onClick={() => setParcelList([])}>Clear All</Button>
-        </div>
-
-        {parcelList.length > 0 && (
-          <div className="border border-gray-200 rounded p-3 mb-3 space-y-1 max-h-48 overflow-y-auto">
-            {parcelList.map((p, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="font-mono text-gray-700">{i + 1}. {p}</span>
-                <button onClick={() => removeParcel(i)} className="text-red-400 hover:text-red-600 text-xs font-bold">✕</button>
+            {/* Success */}
+            {lastSheet && (
+              <div className="mb-4 flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={18} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-green-800">Load Sheet Created!</p>
+                  <p className="text-sm text-green-700 mt-0.5">
+                    Sheet No: <span className="font-bold font-mono">{lastSheet.loadSheetNo}</span>
+                    <span className="mx-1">·</span>
+                    {lastSheet.parcelIds.length} parcels
+                  </p>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => window.print()}>
+                  <Printer size={13} /> Print
+                </Button>
               </div>
-            ))}
+            )}
+
+            {/* Input */}
+            <div className="flex gap-2 mb-3">
+              <div className="relative flex-1">
+                <Plus size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  className={`${inputCls} pl-9 text-base`}
+                  placeholder="Type tracking number and press Enter..."
+                  value={parcelInput}
+                  onChange={e => setParcelInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              {parcelList.length > 0 && (
+                <button onClick={() => setParcelList([])} className="text-gray-400 hover:text-red-500 transition-colors px-3" title="Clear all">
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Parcel chips */}
+            {parcelList.length > 0 && (
+              <div className="border border-gray-200 rounded-lg p-3 mb-4 max-h-48 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {parcelList.map((p, i) => (
+                    <div key={i} className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
+                      <span className="font-mono text-xs text-green-800 font-medium">{p}</span>
+                      <button onClick={() => removeParcel(i)} className="text-green-400 hover:text-red-500 transition-colors">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <Package size={12} /> {parcelList.length} parcel{parcelList.length !== 1 ? 's' : ''} added
+              </p>
+              <Button onClick={generateSheet} loading={creating} disabled={parcelList.length === 0}>
+                <FileSpreadsheet size={14} /> Generate Load Sheet
+              </Button>
+            </div>
           </div>
-        )}
-
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-500">{parcelList.length} parcel(s) added</p>
-          <Button onClick={generateSheet} loading={creating} disabled={parcelList.length === 0}>
-            Generate Load Sheet
-          </Button>
-        </div>
-      </div>
-
-      {/* Report */}
-      <div className="card p-5">
-        <h2 className="font-semibold text-sm text-gray-700 mb-3">Report Load Sheet</h2>
-        <div className="flex gap-3 mb-4">
-          <input placeholder="Load Sheet No" className={fieldCls} value={search.loadSheetNo} onChange={e => setSearch(s => ({...s, loadSheetNo: e.target.value}))} />
-          <input type="date" className={fieldCls} value={search.fromDate} onChange={e => setSearch(s => ({...s, fromDate: e.target.value}))} />
-          <input type="date" className={fieldCls} value={search.toDate} onChange={e => setSearch(s => ({...s, toDate: e.target.value}))} />
-          <Button onClick={loadSheets} loading={loading}>Search</Button>
         </div>
 
-        <table className="tbl">
-          <thead><tr><th>Load Sheet No</th><th>Date</th><th>Parcels</th><th>Created By</th><th>Actions</th></tr></thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={5} className="text-center py-8"><span className="spinner spinner-green inline-block" style={{width:20,height:20}} /></td></tr>
-            ) : sheets.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-6 text-red-500 font-medium">No Record Found</td></tr>
-            ) : sheets.map(s => (
-              <tr key={s._id}>
-                <td className="text-green-600 font-medium">{s.loadSheetNo}</td>
-                <td className="text-xs text-gray-500">{new Date(s.createdAt).toLocaleDateString()}</td>
-                <td>{s.parcelIds.length}</td>
-                <td>{s.createdBy?.name}</td>
-                <td><Button size="sm" variant="secondary">Print</Button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        {/* ── Existing Load Sheets ── */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Search size={16} className="text-green-600" />
+            <h3 className="font-semibold text-sm text-gray-800">Load Sheet History</h3>
+          </div>
+          <div className="p-5">
+            <div className="flex flex-wrap gap-3 mb-4 items-end">
+              <div className="flex-1 min-w-48">
+                <label className={labelCls}>Load Sheet Number</label>
+                <input placeholder="e.g. LS-1234..." className={inputCls} value={search.loadSheetNo} onChange={e => setSearch(s => ({...s, loadSheetNo: e.target.value}))} />
+              </div>
+              <div className="w-36">
+                <label className={labelCls}><Calendar size={10} className="inline mr-1" />From Date</label>
+                <input type="date" className={inputCls} value={search.fromDate} onChange={e => setSearch(s => ({...s, fromDate: e.target.value}))} />
+              </div>
+              <div className="w-36">
+                <label className={labelCls}><Calendar size={10} className="inline mr-1" />To Date</label>
+                <input type="date" className={inputCls} value={search.toDate} onChange={e => setSearch(s => ({...s, toDate: e.target.value}))} />
+              </div>
+              <Button onClick={loadSheets} loading={loading} size="sm">
+                <Search size={13} /> Search
+              </Button>
+            </div>
+
+            {/* Table */}
+            <div className="border border-gray-200 rounded-lg overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Load Sheet No</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Date Created</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Parcels</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Created By</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={5} className="text-center py-12"><span className="spinner spinner-green inline-block" style={{width:20,height:20}} /></td></tr>
+                  ) : sheets.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12">
+                        <FileSpreadsheet size={28} className="mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">No load sheets found.</p>
+                      </td>
+                    </tr>
+                  ) : sheets.map(s => (
+                    <tr key={s._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded">{s.loadSheetNo}</span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{new Date(s.createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                      <td className="px-4 py-3">
+                        <span className="bg-gray-100 text-gray-700 font-semibold text-xs px-2 py-0.5 rounded">{s.parcelIds.length} parcels</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{s.createdBy?.name || '—'}</td>
+                      <td className="px-4 py-3">
+                        <Button size="sm" variant="secondary" onClick={() => window.print()}>
+                          <Printer size={12} /> Print
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

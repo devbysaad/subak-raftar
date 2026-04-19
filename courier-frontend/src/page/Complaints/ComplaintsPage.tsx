@@ -2,8 +2,19 @@ import React, { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { API } from '@/constants/api';
 import Button from '@/components/ui/Button';
+import Navbar from '@/components/ui/Navbar';
+import { CheckCircle2, AlertCircle, MessageSquare, Search, Calendar } from 'lucide-react';
 
-interface Complaint { _id: string; parcelNo: string; status: string; remarks: string; rStatus: string; cStatus: string; createdAt: string; createdBy: { name: string } }
+interface Complaint {
+  _id: string;
+  parcelNo: string;
+  status: string;
+  remarks: string;
+  rStatus: string;
+  cStatus: string;
+  createdAt: string;
+  createdBy: { name: string };
+}
 
 export default function ComplaintsPage() {
   const [form, setForm]     = useState({ parcelNo: '', status: 'open', remarks: '' });
@@ -16,7 +27,16 @@ export default function ComplaintsPage() {
   const [searched, setSearched]     = useState(false);
 
   const statusOptions = ['open', 'in_progress', 'resolved', 'closed'];
-  const fieldCls = "border border-gray-300 rounded px-3 py-2 text-sm bg-[#fafaf5] focus:ring-1 focus:ring-green-500 focus:outline-none";
+  const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors';
+  const labelCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1';
+
+  const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const statusColor = (s: string) => {
+    if (s === 'open') return 'bg-red-100 text-red-700';
+    if (s === 'in_progress') return 'bg-yellow-100 text-yellow-700';
+    if (s === 'resolved') return 'bg-green-100 text-green-700';
+    return 'bg-gray-100 text-gray-600';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +45,7 @@ export default function ComplaintsPage() {
       await axiosInstance.post(API.COMPLAINTS.CREATE, form);
       setSubmitted(true);
       setForm({ parcelNo: '', status: 'open', remarks: '' });
-      setTimeout(() => setSubmitted(false), 3000);
+      setTimeout(() => setSubmitted(false), 4000);
     } finally {
       setSubmitting(false);
     }
@@ -43,86 +63,160 @@ export default function ComplaintsPage() {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Add Complaint */}
-      <div className="card p-5">
-        <h2 className="font-semibold text-sm text-gray-700 mb-4">Add Complain</h2>
-        {submitted && (
-          <div className="mb-3 bg-green-50 border border-green-200 rounded p-2 text-sm font-medium text-green-700">
-            ✓ Complaint submitted successfully.
-          </div>
-        )}
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Parcel No *</label>
-              <input required className={fieldCls + ' w-full'} value={form.parcelNo} onChange={e => setForm(f => ({...f, parcelNo: e.target.value}))} />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Status</label>
-              <select className={fieldCls + ' w-full'} value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))}>
-                {statusOptions.map(s => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Remarks</label>
-            <textarea
-              rows={3}
-              className={fieldCls + ' w-full resize-none'}
-              value={form.remarks}
-              onChange={e => setForm(f => ({...f, remarks: e.target.value}))}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button type="submit" loading={submitting}>Submit Complain</Button>
-          </div>
-        </form>
-      </div>
+  // Load complaints on mount
+  useEffect(() => { handleSearch(); }, []);
 
-      {/* Search */}
-      <div className="card p-5">
-        <h2 className="font-semibold text-sm text-gray-700 mb-4">Complain Detail</h2>
-        <div className="grid grid-cols-5 gap-3 mb-3">
-          <input placeholder="Parcel No" className={fieldCls} value={search.parcelNo} onChange={e => setSearch(s => ({...s, parcelNo: e.target.value}))} />
-          <select className={fieldCls} value={search.rStatus} onChange={e => setSearch(s => ({...s, rStatus: e.target.value}))}>
-            <option value="">R-Status</option>
-            {statusOptions.map(s => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-          </select>
-          <select className={fieldCls} value={search.cStatus} onChange={e => setSearch(s => ({...s, cStatus: e.target.value}))}>
-            <option value="">C-Status</option>
-            {statusOptions.map(s => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-          </select>
-          <input type="date" className={fieldCls} value={search.fromDate} onChange={e => setSearch(s => ({...s, fromDate: e.target.value}))} />
-          <input type="date" className={fieldCls} value={search.toDate} onChange={e => setSearch(s => ({...s, toDate: e.target.value}))} />
+  return (
+    <div className="flex-1 flex flex-col min-h-screen bg-[#f5f5f5]">
+      <Navbar title="Complaints" />
+
+      <main className="p-6 space-y-5">
+
+        {/* ── Add Complaint ── */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <MessageSquare size={16} className="text-green-600" />
+            <h3 className="font-semibold text-sm text-gray-800">Submit a New Complaint</h3>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-gray-500 mb-4">
+              Enter the tracking number of the parcel you have an issue with. Our team will investigate and update you.
+            </p>
+
+            {submitted && (
+              <div className="mb-4 flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">Complaint Submitted!</p>
+                  <p className="text-sm text-green-700 mt-0.5">We'll review it and update the status shortly.</p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className={labelCls}>Tracking / Parcel Number <span className="text-red-500">*</span></label>
+                  <input required placeholder="e.g. TCS12345678" className={inputCls} value={form.parcelNo} onChange={e => setForm(f => ({...f, parcelNo: e.target.value}))} />
+                </div>
+                <div>
+                  <label className={labelCls}>Complaint Status</label>
+                  <select className={inputCls} value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))}>
+                    {statusOptions.map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className={labelCls}>What's the Issue? (Describe your complaint)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Describe what happened — e.g. Customer says they were home but courier marked as failed..."
+                  className={`${inputCls} resize-none`}
+                  value={form.remarks}
+                  onChange={e => setForm(f => ({...f, remarks: e.target.value}))}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" loading={submitting}>
+                  <MessageSquare size={14} /> Submit Complaint
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div className="flex justify-end mb-4">
-          <Button onClick={handleSearch} loading={loading}>Search</Button>
+
+        {/* ── Search Existing Complaints ── */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Search size={16} className="text-green-600" />
+            <h3 className="font-semibold text-sm text-gray-800">Search Complaints</h3>
+          </div>
+          <div className="p-5">
+            <div className="flex flex-wrap gap-3 mb-4 items-end">
+              <div className="flex-1 min-w-48">
+                <label className={labelCls}>Tracking Number</label>
+                <input placeholder="Search by parcel number..." className={inputCls} value={search.parcelNo} onChange={e => setSearch(s => ({...s, parcelNo: e.target.value}))} />
+              </div>
+              <div className="w-40">
+                <label className={labelCls}>Resolution Status</label>
+                <select className={inputCls} value={search.rStatus} onChange={e => setSearch(s => ({...s, rStatus: e.target.value}))}>
+                  <option value="">All</option>
+                  {statusOptions.map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                </select>
+              </div>
+              <div className="w-40">
+                <label className={labelCls}>Complaint Status</label>
+                <select className={inputCls} value={search.cStatus} onChange={e => setSearch(s => ({...s, cStatus: e.target.value}))}>
+                  <option value="">All</option>
+                  {statusOptions.map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                </select>
+              </div>
+              <div className="w-36">
+                <label className={labelCls}><Calendar size={10} className="inline mr-1" />From Date</label>
+                <input type="date" className={inputCls} value={search.fromDate} onChange={e => setSearch(s => ({...s, fromDate: e.target.value}))} />
+              </div>
+              <div className="w-36">
+                <label className={labelCls}><Calendar size={10} className="inline mr-1" />To Date</label>
+                <input type="date" className={inputCls} value={search.toDate} onChange={e => setSearch(s => ({...s, toDate: e.target.value}))} />
+              </div>
+              <Button onClick={handleSearch} loading={loading} size="sm">
+                <Search size={13} /> Search
+              </Button>
+            </div>
+
+            {/* Results */}
+            {searched && (
+              complaints.length === 0 ? (
+                <div className="text-center py-10 border border-gray-100 rounded-lg bg-gray-50">
+                  <AlertCircle size={28} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-500">No complaints found matching your search.</p>
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Tracking No</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Resolution</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Remarks</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Created By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {complaints.map(c => (
+                        <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <span className="font-mono text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{c.parcelNo}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor(c.status)}`}>
+                              {statusLabel(c.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {c.rStatus ? (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor(c.rStatus)}`}>
+                                {statusLabel(c.rStatus)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-300 text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 max-w-[220px] truncate text-gray-600 text-xs">{c.remarks || '—'}</td>
+                          <td className="px-4 py-3 text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                          <td className="px-4 py-3 text-xs text-gray-600">{c.createdBy?.name || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+          </div>
         </div>
-        {searched && (
-          complaints.length === 0 ? (
-            <p className="text-center text-red-500 font-medium py-4">No Record Found</p>
-          ) : (
-            <table className="tbl">
-              <thead><tr><th>Parcel No</th><th>Status</th><th>R-Status</th><th>C-Status</th><th>Remarks</th><th>Date</th><th>By</th></tr></thead>
-              <tbody>
-                {complaints.map(c => (
-                  <tr key={c._id}>
-                    <td className="font-medium">{c.parcelNo}</td>
-                    <td>{c.status}</td>
-                    <td>{c.rStatus || '—'}</td>
-                    <td>{c.cStatus || '—'}</td>
-                    <td className="max-w-[200px] truncate text-gray-500 text-xs">{c.remarks}</td>
-                    <td className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</td>
-                    <td className="text-xs">{c.createdBy?.name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )
-        )}
-      </div>
+      </main>
     </div>
   );
 }
