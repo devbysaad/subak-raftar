@@ -21,7 +21,7 @@ export default function LoadSheetPage() {
 
   const [sheets, setSheets]   = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch]   = useState({ loadSheetNo: '', fromDate: '', toDate: '', page: 1 });
+  const [search, setSearch]   = useState({ loadSheetNo: '', fromDate: '', toDate: '', page: 1, limit: 10 });
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal]           = useState(0);
 

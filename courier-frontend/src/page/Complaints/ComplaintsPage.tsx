@@ -21,7 +21,7 @@ export default function ComplaintsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
 
-  const [search, setSearch] = useState({ parcelNo: '', rStatus: '', cStatus: '', fromDate: '', toDate: '', page: 1 });
+  const [search, setSearch] = useState({ parcelNo: '', rStatus: '', cStatus: '', fromDate: '', toDate: '', page: 1, limit: 10 });
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal]           = useState(0);
