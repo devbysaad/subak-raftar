@@ -30,21 +30,30 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   children,
   className = '',
+  onClick,
   ...props
-}) => (
-  <button
-    disabled={disabled || loading}
-    className={`
-      inline-flex items-center justify-center gap-2 font-medium border
-      rounded-full cursor-pointer transition-colors duration-150
-      disabled:opacity-60 disabled:cursor-not-allowed
-      ${variantClasses[variant]} ${sizeClasses[size]} ${className}
-    `}
-    {...props}
-  >
-    {loading && <span className={`spinner ${variant === 'primary' || variant === 'danger' ? '' : 'spinner-green'}`} />}
-    {children}
-  </button>
-);
+}) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log(`[Button Click] 🖱️ Clicked button:`, typeof children === 'string' ? children : 'Icon/Element Button');
+    if (onClick) onClick(e);
+  };
+
+  return (
+    <button
+      disabled={disabled || loading}
+      onClick={handleClick}
+      className={`
+        inline-flex items-center justify-center gap-2 font-medium border
+        rounded-full cursor-pointer transition-colors duration-150
+        disabled:opacity-60 disabled:cursor-not-allowed
+        ${variantClasses[variant]} ${sizeClasses[size]} ${className}
+      `}
+      {...props}
+    >
+      {loading && <span className={`spinner ${variant === 'primary' || variant === 'danger' ? '' : 'spinner-green'}`} />}
+      {children}
+    </button>
+  );
+};
 
 export default Button;

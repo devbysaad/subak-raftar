@@ -6,13 +6,20 @@ import AppRoutes from '@/components/routes/routes';
 import { useAppDispatch } from '@/hooks/useRedux';
 import { fetchMeRequest } from '@/redux/slice/authSlice';
 
+import { useLocation } from 'react-router-dom';
+
 /** Dispatches session restore on mount, inside the Redux Provider */
 const AppInit: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
 
   useEffect(() => {
     dispatch(fetchMeRequest());
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log(`[Page Change] 📄 Navigated to: ${location.pathname}${location.search}`);
+  }, [location]);
 
   return <>{children}</>;
 };

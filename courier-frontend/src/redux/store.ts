@@ -8,6 +8,11 @@ import { rootSaga }     from './saga/rootSaga';
 
 const sagaMiddleware = createSagaMiddleware();
 
+const customLogger = (store: any) => (next: any) => (action: any) => {
+  console.log(`[Redux Action] 🚀 ${action.type}`, action.payload || '');
+  return next(action);
+};
+
 export const store = configureStore({
   reducer: {
     auth:      authReducer,
@@ -16,7 +21,7 @@ export const store = configureStore({
     ui:        uiReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware),
+    getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware, customLogger),
 });
 
 sagaMiddleware.run(rootSaga);
