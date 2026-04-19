@@ -16,10 +16,22 @@ const invoiceRoutes     = require("./modules/invoices/invoice.routes");
 
 const app = express();
 
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || "http://localhost:3000")
+    .split(",")
+    .map(o => o.trim());
+
 app.use(cors({
-    origin: (process.env.FRONTEND_URL || "http://localhost:3000").split(",").map(o => o.trim()),
+    origin: (origin, callback) => {
+        // Allow requests with no origin (curl, Postman, server-to-server)
+        if (!origin) return callback(null, true);
+        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        // Also allow any *.vercel.app preview URLs automatically
+        if (origin.endsWith(".vercel.app")) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
 }));
+
 
 // Raw body for Shopify HMAC — must come before express.json()
 app.use((req, res, next) => {
