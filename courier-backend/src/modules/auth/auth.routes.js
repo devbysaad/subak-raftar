@@ -1,9 +1,18 @@
 const { Router } = require("express");
-const { toNodeHandler } = require("better-auth/node");
 const { auth } = require("./auth.config");
 
 const router = Router();
 
-router.all("/*", toNodeHandler(auth));
+// Use dynamic import because better-auth/node is ESM only (.mjs)
+// and Vercel Node runtime throws ERR_REQUIRE_ESM on require()
+router.all("/*", async (req, res, next) => {
+    try {
+        const { toNodeHandler } = await import("better-auth/node");
+        const handler = toNodeHandler(auth);
+        return handler(req, res);
+    } catch (err) {
+        next(err);
+    }
+});
 
 module.exports = router;
