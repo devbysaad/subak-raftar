@@ -1,8 +1,15 @@
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
-const app = require("../src/app");
-const connectDB = require("../src/config/db");
+let app, connectDB, bootError;
+
+try {
+    app = require("../src/app");
+    connectDB = require("../src/config/db");
+} catch (err) {
+    bootError = err;
+    console.error("[Vercel] Boot error:", err.message, err.stack);
+}
 
 let dbConnected = false;
 
@@ -34,13 +41,26 @@ module.exports = async (req, res) => {
         return res.status(204).end();
     }
 
+    if (bootError) {
+        return res.status(500).json({
+            success: false,
+            message: "Server boot error",
+            error: bootError.message,
+            stack: bootError.stack,
+        });
+    }
+
     if (!dbConnected) {
         try {
             await connectDB();
             dbConnected = true;
         } catch (err) {
             console.error("[Vercel] DB connection failed:", err.message);
-            return res.status(500).json({ success: false, message: "Database connection failed" });
+            return res.status(500).json({
+                success: false,
+                message: "Database connection failed",
+                error: err.message,
+            });
         }
     }
 
