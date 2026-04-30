@@ -3,7 +3,7 @@ const { auth } = require("../auth/auth.config");
 const User = require("./user.model");
 const { success, failure } = require("../../utils/response.utils");
 
-// GET /api/users/me
+// GET /api/users/me — any authenticated user
 const getMe = async (req, res) => {
     res.json(success(req.user));
 };
@@ -19,7 +19,8 @@ const getUsers = async (req, res) => {
 };
 
 // POST /api/users — admin creates employee
-// Uses better-auth programmatic API then creates our User doc
+// 1. create better-auth account
+// 2. create/update our User mongoose doc
 const createUser = async (req, res) => {
     try {
         const { name, email, password, role = "employee" } = req.body;
@@ -27,7 +28,7 @@ const createUser = async (req, res) => {
             return res.status(400).json(failure("name, email and password are required"));
         }
 
-        // 1. Create the auth account via better-auth's programmatic API
+        // 1. Create the auth account via better-auth programmatic API
         let authId;
         try {
             const result = await auth.api.signUpEmail({
@@ -35,7 +36,6 @@ const createUser = async (req, res) => {
             });
             authId = result?.user?.id;
         } catch (authErr) {
-            // better-auth throws if email already exists
             const msg = authErr?.message || "Failed to create auth account";
             if (msg.toLowerCase().includes("exist")) {
                 return res.status(409).json(failure("A user with this email already exists"));
@@ -47,10 +47,16 @@ const createUser = async (req, res) => {
             return res.status(500).json(failure("Auth signup succeeded but returned no user ID"));
         }
 
-        // 2. Create our User doc (upsert by authId to be safe)
+        // 2. Upsert our User doc (safe: authId is unique)
         let user = await User.findOne({ authId });
         if (!user) {
-            user = await User.create({ authId, name, email: email.toLowerCase(), role, isActive: true });
+            user = await User.create({
+                authId,
+                name,
+                email: email.toLowerCase(),
+                role,
+                isActive: true,
+            });
         } else {
             user.role = role;
             await user.save();
@@ -82,7 +88,7 @@ const updateUser = async (req, res) => {
         const user = await userService.updateUser(req.params.id, req.body);
         res.json(success(user));
     } catch (err) {
-        res.status(err.message.includes("not found") ? 404 : 500).json(failure(err.message));
+        res.status(err.status || 500).json(failure(err.message));
     }
 };
 
@@ -92,8 +98,15 @@ const deactivateUser = async (req, res) => {
         const user = await userService.deactivateUser(req.params.id);
         res.json(success(user, "User deactivated"));
     } catch (err) {
-        res.status(err.message.includes("not found") ? 404 : 500).json(failure(err.message));
+        res.status(err.status || 500).json(failure(err.message));
     }
 };
 
-module.exports = { getMe, getUsers, createUser, getUserById, updateUser, deactivateUser };
+module.exports = {
+    getMe,
+    getUsers,
+    createUser,
+    getUserById,
+    updateUser,
+    deactivateUser,
+};

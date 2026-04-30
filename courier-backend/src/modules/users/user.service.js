@@ -12,8 +12,9 @@ const getUserById = async (id) => {
 
 const createUser = async ({ name, email, phone, role }) => {
     const exists = await User.findOne({ email: email.toLowerCase() }).lean();
-    if (exists) throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
-
+    if (exists) {
+        throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
+    }
     const user = await User.create({ name, email, phone, role: role || "employee" });
     return user.toObject();
 };
@@ -29,7 +30,7 @@ const updateUser = async (id, data) => {
         runValidators: true,
     }).lean();
 
-    if (!updated) throw new Error("User not found");
+    if (!updated) throw Object.assign(new Error("User not found"), { status: 404 });
     return updated;
 };
 
@@ -40,16 +41,20 @@ const deactivateUser = async (id) => {
         { new: true }
     ).lean();
 
-    if (!updated) throw new Error("User not found");
+    if (!updated) throw Object.assign(new Error("User not found"), { status: 404 });
     return updated;
 };
 
+/**
+ * findOrCreateFromAuth — called from auth middleware on first-ever login.
+ * Safe: uses findOne first, creates only if not found.
+ */
 const findOrCreateFromAuth = async ({ authId, name, email }) => {
     let user = await User.findOne({ authId }).lean();
     if (user) return user;
 
-    user = await User.create({ authId, name, email });
-    return user.toObject();
+    const created = await User.create({ authId, name, email, role: "employee" });
+    return created.toObject();
 };
 
 module.exports = {

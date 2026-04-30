@@ -1,15 +1,17 @@
-const TCSAdapter = require("./tsc.adapter");
-const TraxAdapter = require("./trax.adapter");
-const MPAdapter = require("./mp.adapter");
-const TranzoAdapter = require("./tranzo.adapter");
-const SelfAdapter = require("./self.adapter");
+const TCSAdapter      = require("./tcs.adapter");
+const TraxAdapter     = require("./trax.adapter");
+const MPAdapter       = require("./mp.adapter");
+const TranzoAdapter   = require("./tranzo.adapter");
+const LeopardsAdapter = require("./leopards.adapter");
+const SelfAdapter     = require("./self.adapter");
 
 const ADAPTER_MAP = {
-    tcs: TCSAdapter,
-    trax: TraxAdapter,
-    mp: MPAdapter,
-    tranzo: TranzoAdapter,
-    self: SelfAdapter,
+    tcs:      TCSAdapter,
+    trax:     TraxAdapter,
+    mp:       MPAdapter,
+    tranzo:   TranzoAdapter,
+    leopards: LeopardsAdapter,
+    self:     SelfAdapter,
 };
 
 const getAdapter = (provider, keys = {}) => {

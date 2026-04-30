@@ -1,15 +1,15 @@
 class BaseAdapter {
-    async bookShipment(shipmentData, companyId) {
+    async bookShipment(_shipmentData, _keys) {
         throw new Error("bookShipment() not implemented");
     }
 
-    async getStatus(trackingNo, companyId) {
+    async getStatus(_trackingNo, _keys) {
         throw new Error("getStatus() not implemented");
     }
 
-    async cancelShipment(trackingNo, companyId) {
+    async cancelShipment(_trackingNo, _keys) {
         throw new Error("cancelShipment() not implemented");
     }
 }
 
-module.exports = BaseAdapter;
+module.exports = { BaseAdapter };

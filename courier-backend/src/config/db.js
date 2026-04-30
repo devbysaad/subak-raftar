@@ -1,10 +1,9 @@
 const mongoose = require("mongoose");
 
-// Global cache to prevent multiple connections in Vercel Serverless environment
-let cached = global.mongoose;
-
+// Global cache — survives across Vercel serverless warm invocations
+let cached = global._mongooseCache;
 if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
+    cached = global._mongooseCache = { conn: null, promise: null };
 }
 
 const connectDB = async () => {
@@ -15,14 +14,17 @@ const connectDB = async () => {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            maxPoolSize: 1,           // keep pool small for serverless
             serverSelectionTimeoutMS: 10000,
         };
 
         console.log("[DB] Initializing new MongoDB connection...");
-        cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
-            console.log("[DB] MongoDB successfully connected");
-            return mongoose;
-        });
+        cached.promise = mongoose
+            .connect(process.env.MONGO_URI, opts)
+            .then((m) => {
+                console.log("[DB] MongoDB successfully connected");
+                return m;
+            });
     }
 
     try {

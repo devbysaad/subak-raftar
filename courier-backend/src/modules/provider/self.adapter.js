@@ -1,4 +1,4 @@
-const BaseAdapter = require("./base.adapter");
+const { BaseAdapter } = require("./base.adapter");
 
 // Self = courier company delivers themselves (local Karachi)
 // No API calls — admin updates status manually from dashboard

@@ -12,7 +12,6 @@ required.forEach((key) => {
 
 const start = async () => {
     await connectDB();
-    // Start cron only in long-running process (not Vercel serverless)
     startTrackingCron();
     app.listen(process.env.PORT || 5000, () => {
         console.log(`[Server] Running on port ${process.env.PORT || 5000}`);

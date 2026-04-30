@@ -21,9 +21,9 @@ const COD_STATUS = {
 
 const PROVIDERS = {
     TCS: "tcs",
+    LEOPARDS: "leopards",
     TRAX: "trax",
     MP: "mp",
-    TRANZO: "tranzo",
     SELF: "self",
 };
 

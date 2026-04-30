@@ -15,29 +15,28 @@ const authMiddleware = async (req, res, next) => {
 
         const { id: authId, name, email } = session.user;
 
-        // findOneAndUpdate with upsert — atomic, never throws duplicate key
-        // If the user already exists (by authId OR email) we get it back.
-        // We use findOne first so we can distinguish admin role from default 'employee'.
+        // ── 1. Try direct authId lookup (fast path, covers 99 % of requests) ──
         let user = await User.findOne({ authId }).lean();
 
         if (!user) {
-            // Also try by email in case the seed created the doc before authId was set
+            // ── 2. Back-fill: seed may have created the User doc before authId was known
             user = await User.findOne({ email: email.toLowerCase() }).lean();
 
             if (user) {
-                // Back-fill the authId so future lookups work via authId
+                // Patch the authId so future requests skip this branch
                 await User.updateOne({ _id: user._id }, { $set: { authId } });
                 user = { ...user, authId };
             } else {
-                // Truly new user — create once
+                // ── 3. Truly new user — create exactly once
                 try {
-                    const created = await User.create({ authId, name, email });
+                    const created = await User.create({ authId, name, email, role: "employee" });
                     user = created.toObject();
                 } catch (createErr) {
                     if (createErr.code === 11000) {
                         // Race condition — another request created it simultaneously
-                        user = await User.findOne({ authId }).lean()
-                            || await User.findOne({ email: email.toLowerCase() }).lean();
+                        user =
+                            (await User.findOne({ authId }).lean()) ||
+                            (await User.findOne({ email: email.toLowerCase() }).lean());
                     } else {
                         throw createErr;
                     }
@@ -47,6 +46,10 @@ const authMiddleware = async (req, res, next) => {
 
         if (!user) {
             return res.status(500).json(failure("Could not resolve user from session"));
+        }
+
+        if (!user.isActive) {
+            return res.status(403).json(failure("Your account has been deactivated"));
         }
 
         req.user = user;

@@ -1,4 +1,4 @@
-const MockAdapter = require("./mock.adapter");
+const { MockAdapter } = require("./mock.adapter");
 
 class TranzoAdapter extends MockAdapter {
   constructor(keys) {

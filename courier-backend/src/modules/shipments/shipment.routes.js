@@ -2,24 +2,32 @@ const { Router } = require("express");
 const authMiddleware = require("../../middleware/auth.middleware");
 const { requireRole } = require("../../middleware/role.middleware");
 const validate = require("../../middleware/validate.middleware");
-const statusHistoryService = require("../status-history/statusHistory.service");
-const { success, failure } = require("../../utils/response.utils");
 const { ROLES } = require("../../config/constants");
 const { createShipmentSchema, updateStatusSchema } = require("./shipment.validator");
-const ctrl = require("./shipment.controller");
+const statusHistoryService = require("../status-history/statusHistory.service");
+const { success, failure } = require("../../utils/response.utils");
+const {
+    create,
+    list,
+    detail,
+    updateStatus,
+    cancel,
+    bulkCreate,
+    getAnalytics,
+} = require("./shipment.controller");
 
 const router = Router();
 router.use(authMiddleware);
 
-router.get("/",    ctrl.list);
-router.get("/analytics/couriers", ctrl.getAnalytics);
-router.post("/",   validate(createShipmentSchema), ctrl.create);
-router.post("/bulk", ctrl.bulkCreate);
+router.get("/",                    list);
+router.get("/analytics/couriers",  getAnalytics);
 
-router.get("/:id",           ctrl.detail);
-router.patch("/:id/status",  requireRole(ROLES.ADMIN), validate(updateStatusSchema), ctrl.updateStatus);
-router.patch("/:id/cancel",  ctrl.cancel);
-router.get("/:id/history",  async (req, res) => {
+// ⚠️  /bulk MUST be before /:id
+router.post("/bulk",               bulkCreate);
+router.post("/",                   validate(createShipmentSchema), create);
+
+router.get("/:id",                 detail);
+router.get("/:id/history",         async (req, res) => {
     try {
         const history = await statusHistoryService.getHistory(req.params.id);
         res.json(success(history));
@@ -27,5 +35,7 @@ router.get("/:id/history",  async (req, res) => {
         res.status(500).json(failure(err.message));
     }
 });
+router.patch("/:id/status",        requireRole(ROLES.ADMIN), validate(updateStatusSchema), updateStatus);
+router.patch("/:id/cancel",        cancel);
 
 module.exports = router;

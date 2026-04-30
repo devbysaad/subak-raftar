@@ -4,79 +4,65 @@ const Settings = require("../settings/settings.model");
 const { getAdapter } = require("../provider/provider.factory");
 const statusHistoryService = require("../status-history/statusHistory.service");
 
-// verify the webhook actually came from Shopify
 const verifyShopifyWebhook = (rawBody, signature, secret) => {
-  const hash = crypto
-    .createHmac("sha256", secret)
-    .update(rawBody, "utf8")
-    .digest("base64");
-  return hash === signature;
+    if (!secret || !signature) return false;
+    const hash = crypto
+        .createHmac("sha256", secret)
+        .update(rawBody, "utf8")
+        .digest("base64");
+    return hash === signature;
 };
 
-// map Shopify order fields to our shipment schema
 const mapOrderToShipment = (order) => ({
-  sender: {
-    name:    order.shop_name || "Merchant",
-    phone:   order.billing_address?.phone || "0000000000",
-    address: order.billing_address?.address1 || "",
-    city:    order.billing_address?.city || "",
-  },
-  receiver: {
-    name:    `${order.shipping_address?.first_name} ${order.shipping_address?.last_name}`.trim(),
-    phone:   order.shipping_address?.phone || "0000000000",
-    address: order.shipping_address?.address1 || "",
-    city:    order.shipping_address?.city || "",
-  },
-  weight:        order.total_weight ? order.total_weight / 1000 : 1, // shopify sends grams
-  isCOD:         false, // shopify orders are prepaid
-  codAmount:     0,
-  shopifyOrderId: String(order.id),
-  notes:         `Auto-created from Shopify order #${order.order_number}`,
+    receiver: {
+        name:    `${order.shipping_address?.first_name || ""} ${order.shipping_address?.last_name || ""}`.trim() || "Customer",
+        phone:   order.shipping_address?.phone || "0300000000",
+        address: order.shipping_address?.address1 || "",
+        city:    order.shipping_address?.city || "",
+    },
+    weight:         order.total_weight ? order.total_weight / 1000 : 1,
+    isCOD:          false,
+    codAmount:      0,
+    shopifyOrderId: String(order.id),
+    notes:          `Auto-created from Shopify order #${order.order_number}`,
 });
 
-const handleFulfillmentWebhook = async (companyId, order) => {
-  // check if shipment already exists for this order
-  const exists = await Shipment.findOne({
-    companyId,
-    shopifyOrderId: String(order.id),
-  });
+const handleFulfillmentWebhook = async (order) => {
+    const exists = await Shipment.findOne({ shopifyOrderId: String(order.id) });
+    if (exists) {
+        console.log(`[Shopify] Shipment already exists for order ${order.id}`);
+        return exists;
+    }
 
-  if (exists) {
-    console.log(`[Shopify] Shipment already exists for order ${order.id}`);
-    return exists;
-  }
+    const settings = await Settings.findOne().lean();
+    if (!settings) throw new Error("System settings not configured");
 
-  const settings = await Settings.findOne().lean();
-  if (!settings) throw new Error("System settings not configured");
+    const provider = Object.keys(settings.providerKeys || {}).find(
+        (p) => settings.providerKeys[p]?.apiKey
+    ) || "self";
 
-  // use first available provider that has keys, fallback to self
-  const provider = Object.keys(settings.providerKeys || {}).find(
-    (p) => settings.providerKeys[p]?.apiKey
-  ) || "self";
+    const keys     = settings.providerKeys?.[provider] || {};
+    const adapter  = getAdapter(provider, keys);
+    const data     = mapOrderToShipment(order);
+    const booking  = await adapter.bookShipment(data);
 
-  const keys = settings.providerKeys?.[provider] || {};
-  const adapter = getAdapter(provider, keys);
-  const shipmentData = mapOrderToShipment(order);
-  const booking = await adapter.bookShipment(shipmentData, companyId);
+    const shipment = await Shipment.create({
+        ...data,
+        createdBy:          null,
+        provider,
+        providerTrackingNo: booking.trackingNo,
+        status:             "booked",
+    });
 
-  const shipment = await Shipment.create({
-    ...shipmentData,
-    companyId,
-    createdBy:          null, // system created
-    provider,
-    providerTrackingNo: booking.trackingNo,
-    status:             "booked",
-  });
+    await statusHistoryService.log(
+        shipment._id,
+        "booked",
+        null,
+        `Auto-created from Shopify order #${order.order_number}`
+    );
 
-  await statusHistoryService.log(
-    shipment._id,
-    "booked",
-    null,
-    `Auto-created from Shopify order #${order.order_number}`
-  );
-
-  console.log(`[Shopify] Shipment created for order ${order.id}`);
-  return shipment;
+    console.log(`[Shopify] Shipment created for order ${order.id}`);
+    return shipment;
 };
 
 module.exports = { verifyShopifyWebhook, handleFulfillmentWebhook };

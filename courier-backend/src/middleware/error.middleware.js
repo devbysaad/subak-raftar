@@ -9,7 +9,7 @@ const errorMiddleware = (err, req, res, next) => {
     }
 
     if (err.code === 11000) {
-        const field = Object.keys(err.keyValue)[0];
+        const field = Object.keys(err.keyValue || {})[0] || "field";
         return res.status(409).json(failure(`${field} already exists`));
     }
 

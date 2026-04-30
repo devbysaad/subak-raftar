@@ -75,13 +75,23 @@ const bulkCreate = async (req, res) => {
             }
         }
 
-        res.status(207).json(success(
-            { created: created.length, failed: errors.length, errors },
-            `${created.length} shipments created, ${errors.length} failed`
-        ));
+        res.status(207).json(
+            success(
+                { created: created.length, failed: errors.length, errors },
+                `${created.length} shipments created, ${errors.length} failed`
+            )
+        );
     } catch (err) {
         res.status(500).json(failure(err.message));
     }
 };
 
-module.exports = { create, list, detail, updateStatus, cancel, bulkCreate, getAnalytics };
+module.exports = {
+    create,
+    list,
+    getAnalytics,
+    detail,
+    updateStatus,
+    cancel,
+    bulkCreate,
+};

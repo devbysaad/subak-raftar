@@ -1,4 +1,4 @@
-const BaseAdapter = require("./base.adapter");
+const { BaseAdapter } = require("./base.adapter");
 
 const delay = (ms = 300) => new Promise((res) => setTimeout(res, ms));
 
@@ -17,8 +17,8 @@ class MockAdapter extends BaseAdapter {
         this.prefix = providerName.toUpperCase().slice(0, 3);
     }
 
-    async bookShipment(shipmentData, companyId) {
-        await delay();
+    async bookShipment(_shipmentData) {
+        await delay(Math.floor(Math.random() * 100) + 200);
         return {
             trackingNo: `${this.prefix}-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`,
             providerRef: `REF-${Date.now()}`,
@@ -26,8 +26,8 @@ class MockAdapter extends BaseAdapter {
         };
     }
 
-    async getStatus(trackingNo, companyId) {
-        await delay();
+    async getStatus(trackingNo) {
+        await delay(Math.floor(Math.random() * 100) + 200);
         const status = MOCK_STATUSES[Math.floor(Math.random() * MOCK_STATUSES.length)];
         return {
             trackingNo,
@@ -37,8 +37,8 @@ class MockAdapter extends BaseAdapter {
         };
     }
 
-    async cancelShipment(trackingNo, companyId) {
-        await delay();
+    async cancelShipment(trackingNo) {
+        await delay(Math.floor(Math.random() * 100) + 200);
         return {
             success: true,
             trackingNo,
@@ -47,4 +47,4 @@ class MockAdapter extends BaseAdapter {
     }
 }
 
-module.exports = MockAdapter;
+module.exports = { MockAdapter };
