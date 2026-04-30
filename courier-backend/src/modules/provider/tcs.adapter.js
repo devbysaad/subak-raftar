@@ -1,4 +1,4 @@
-const { MockAdapter } = require("./mock.adapter");
+import { MockAdapter } from "./mock.adapter.js";
 
 class TCSAdapter extends MockAdapter {
     constructor(keys) {
@@ -18,12 +18,7 @@ class TCSAdapter extends MockAdapter {
 
     async getStatus(trackingNo) {
         const statuses = ["booked", "received", "in_transit", "out_for_delivery", "delivered"];
-        return {
-            trackingNo,
-            status:    statuses[Math.floor(Math.random() * statuses.length)],
-            location:  "Karachi Hub",
-            timestamp: new Date(),
-        };
+        return { trackingNo, status: statuses[Math.floor(Math.random() * statuses.length)], location: "Karachi Hub", timestamp: new Date() };
     }
 
     async cancelShipment(trackingNo) {
@@ -31,4 +26,4 @@ class TCSAdapter extends MockAdapter {
     }
 }
 
-module.exports = TCSAdapter;
+export default TCSAdapter;

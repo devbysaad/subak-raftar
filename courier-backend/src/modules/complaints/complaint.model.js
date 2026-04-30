@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const complaintSchema = new mongoose.Schema(
     {
@@ -6,11 +6,11 @@ const complaintSchema = new mongoose.Schema(
         shipmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Shipment" },
         status:     { type: String, default: "open" },
         remarks:    { type: String },
-        rStatus:    { type: String },   // resolution status
-        cStatus:    { type: String },   // complaint status
+        rStatus:    { type: String },
+        cStatus:    { type: String },
         createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     },
     { timestamps: true }
 );
 
-module.exports = mongoose.model("Complaint", complaintSchema);
+export default mongoose.model("Complaint", complaintSchema);

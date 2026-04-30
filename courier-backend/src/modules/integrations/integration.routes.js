@@ -1,7 +1,7 @@
-const { Router } = require("express");
-const { verifyShopifyWebhook, handleFulfillmentWebhook } = require("./shopify.service");
-const Settings = require("../settings/settings.model");
-const { success, failure } = require("../../utils/response.utils");
+import { Router } from "express";
+import { verifyShopifyWebhook, handleFulfillmentWebhook } from "./shopify.service.js";
+import Settings from "../settings/settings.model.js";
+import { success, failure } from "../../utils/response.utils.js";
 
 const router = Router();
 
@@ -14,11 +14,7 @@ router.post("/shopify/fulfillment", async (req, res) => {
             return res.status(400).json(failure("Shopify not connected"));
         }
 
-        const isValid = verifyShopifyWebhook(
-            req.rawBody,
-            signature,
-            settings.shopifyApiSecret
-        );
+        const isValid = verifyShopifyWebhook(req.rawBody, signature, settings.shopifyApiSecret);
 
         if (!isValid) {
             return res.status(401).json(failure("Invalid webhook signature"));
@@ -32,4 +28,4 @@ router.post("/shopify/fulfillment", async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const loadSheetSchema = new mongoose.Schema(
     {
@@ -9,4 +9,4 @@ const loadSheetSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model("LoadSheet", loadSheetSchema);
+export default mongoose.model("LoadSheet", loadSheetSchema);

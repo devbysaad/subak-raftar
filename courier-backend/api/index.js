@@ -1,19 +1,12 @@
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
+// ⚠️  env.js MUST be the very first import
+import "../src/config/env.js";
 
-let app, connectDB, bootError;
-
-try {
-    app = require("../src/app");
-    connectDB = require("../src/config/db");
-} catch (err) {
-    bootError = err;
-    console.error("[Vercel] Boot error:", err.message, err.stack);
-}
+import app from "../src/app.js";
+import connectDB from "../src/config/db.js";
 
 let dbConnected = false;
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     const origin = req.headers.origin || "";
 
     const allowed = (process.env.FRONTEND_URL || "http://localhost:3000")
@@ -41,15 +34,6 @@ module.exports = async (req, res) => {
         return res.status(204).end();
     }
 
-    if (bootError) {
-        return res.status(500).json({
-            success: false,
-            message: "Server boot error",
-            error: bootError.message,
-            stack: bootError.stack,
-        });
-    }
-
     if (!dbConnected) {
         try {
             await connectDB();
@@ -59,10 +43,10 @@ module.exports = async (req, res) => {
             return res.status(500).json({
                 success: false,
                 message: "Database connection failed",
-                error: err.message,
+                error:   err.message,
             });
         }
     }
 
     return app(req, res);
-};
+}

@@ -1,15 +1,15 @@
-const express = require("express");
-const cors = require("cors");
-const errorMiddleware = require("./middleware/error.middleware");
+import express from "express";
+import cors from "cors";
+import errorMiddleware from "./middleware/error.middleware.js";
 
-const authRoutes        = require("./modules/auth/auth.routes");
-const userRoutes        = require("./modules/users/user.routes");
-const settingsRoutes    = require("./modules/settings/settings.routes");
-const shipmentRoutes    = require("./modules/shipments/shipment.routes");
-const integrationRoutes = require("./modules/integrations/integration.routes");
-const loadSheetRoutes   = require("./modules/loadsheets/loadsheet.routes");
-const complaintRoutes   = require("./modules/complaints/complaint.routes");
-const invoiceRoutes     = require("./modules/invoices/invoice.routes");
+import authRoutes        from "./modules/auth/auth.routes.js";
+import userRoutes        from "./modules/users/user.routes.js";
+import settingsRoutes    from "./modules/settings/settings.routes.js";
+import shipmentRoutes    from "./modules/shipments/shipment.routes.js";
+import integrationRoutes from "./modules/integrations/integration.routes.js";
+import loadSheetRoutes   from "./modules/loadsheets/loadsheet.routes.js";
+import complaintRoutes   from "./modules/complaints/complaint.routes.js";
+import invoiceRoutes     from "./modules/invoices/invoice.routes.js";
 
 const app = express();
 
@@ -60,4 +60,4 @@ app.use("/api/integrations", integrationRoutes);
 
 app.use(errorMiddleware);
 
-module.exports = app;
+export default app;

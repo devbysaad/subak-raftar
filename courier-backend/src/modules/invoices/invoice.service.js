@@ -1,10 +1,6 @@
-const Shipment = require("../shipments/shipment.model");
+import Shipment from "../shipments/shipment.model.js";
 
-/**
- * Aggregate shipments by period (week/month) for invoice generation.
- * Returns a list of "invoice" objects derived from shipment data.
- */
-const getInvoices = async (query = {}) => {
+export const getInvoices = async (query = {}) => {
     const match = {};
     if (query.fromDate || query.toDate) {
         match.createdAt = {};
@@ -13,30 +9,26 @@ const getInvoices = async (query = {}) => {
     }
     if (query.status) match.status = query.status;
 
-    // Group by week (ISO week) to simulate invoice periods
-    const period = query.period || "monthly";
+    const period  = query.period || "monthly";
     const groupId = period === "weekly"
         ? { year: { $year: "$createdAt" }, week: { $week: "$createdAt" } }
         : { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } };
 
-    const pipeline = [
+    const rows = await Shipment.aggregate([
         { $match: match },
         {
             $group: {
-                _id:          groupId,
-                parcels:      { $sum: 1 },
-                codTotal:     { $sum: "$codAmount" },
-                delivered:    { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
-                firstDate:    { $min: "$createdAt" },
-                lastDate:     { $max: "$createdAt" },
+                _id:       groupId,
+                parcels:   { $sum: 1 },
+                codTotal:  { $sum: "$codAmount" },
+                delivered: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+                firstDate: { $min: "$createdAt" },
+                lastDate:  { $max: "$createdAt" },
             },
         },
         { $sort: { firstDate: -1 } },
-    ];
+    ]);
 
-    const rows = await Shipment.aggregate(pipeline);
-
-    // Decorate with invoice numbers
     return rows.map((r, i) => ({
         invoiceNo:     `INV-${String(i + 1).padStart(4, "0")}`,
         period,
@@ -48,5 +40,3 @@ const getInvoices = async (query = {}) => {
         paymentStatus: "pending",
     }));
 };
-
-module.exports = { getInvoices };

@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const { SHIPMENT_STATUS, PROVIDERS, COD_STATUS } = require("../../config/constants");
+import mongoose from "mongoose";
+import { SHIPMENT_STATUS, PROVIDERS, COD_STATUS } from "../../config/constants.js";
 
 const addressSchema = new mongoose.Schema(
     {
@@ -45,5 +45,4 @@ shipmentSchema.index({ createdAt: -1 });
 shipmentSchema.index({ providerTrackingNo: 1 });
 shipmentSchema.index({ status: 1 });
 
-const Shipment = mongoose.model("Shipment", shipmentSchema);
-module.exports = Shipment;
+export default mongoose.model("Shipment", shipmentSchema);

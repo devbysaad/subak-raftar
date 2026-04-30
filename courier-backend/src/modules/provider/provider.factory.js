@@ -1,9 +1,9 @@
-const TCSAdapter      = require("./tcs.adapter");
-const TraxAdapter     = require("./trax.adapter");
-const MPAdapter       = require("./mp.adapter");
-const TranzoAdapter   = require("./tranzo.adapter");
-const LeopardsAdapter = require("./leopards.adapter");
-const SelfAdapter     = require("./self.adapter");
+import TCSAdapter      from "./tcs.adapter.js";
+import TraxAdapter     from "./trax.adapter.js";
+import MPAdapter       from "./mp.adapter.js";
+import TranzoAdapter   from "./tranzo.adapter.js";
+import LeopardsAdapter from "./leopards.adapter.js";
+import SelfAdapter     from "./self.adapter.js";
 
 const ADAPTER_MAP = {
     tcs:      TCSAdapter,
@@ -14,10 +14,8 @@ const ADAPTER_MAP = {
     self:     SelfAdapter,
 };
 
-const getAdapter = (provider, keys = {}) => {
+export const getAdapter = (provider, keys = {}) => {
     const Adapter = ADAPTER_MAP[provider];
     if (!Adapter) throw new Error(`Unknown provider: ${provider}`);
     return new Adapter(keys);
 };
-
-module.exports = { getAdapter };

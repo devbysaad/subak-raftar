@@ -1,6 +1,6 @@
-const { failure } = require("../utils/response.utils");
+import { failure } from "../utils/response.utils.js";
 
-const requireRole = (...roles) => {
+export const requireRole = (...roles) => {
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json(failure("Unauthorized"));
@@ -11,5 +11,3 @@ const requireRole = (...roles) => {
         next();
     };
 };
-
-module.exports = { requireRole };

@@ -1,32 +1,21 @@
-const { BaseAdapter } = require("./base.adapter");
-
-// Self = courier company delivers themselves (local Karachi)
-// No API calls — admin updates status manually from dashboard
+import { BaseAdapter } from "./base.adapter.js";
 
 class SelfAdapter extends BaseAdapter {
-    async bookShipment(shipmentData, companyId) {
+    async bookShipment(shipmentData) {
         return {
-            trackingNo: `SELF-${Date.now()}`,
+            trackingNo:  `SELF-${Date.now()}`,
             providerRef: null,
-            message: "Local delivery — status updated manually by admin",
+            message:     "Local delivery — status updated manually by admin",
         };
     }
 
-    async getStatus(trackingNo, companyId) {
-        return {
-            trackingNo,
-            status: null,
-            message: "Local delivery — check portal for status",
-        };
+    async getStatus(trackingNo) {
+        return { trackingNo, status: null, message: "Local delivery — check portal for status" };
     }
 
-    async cancelShipment(trackingNo, companyId) {
-        return {
-            success: true,
-            trackingNo,
-            message: "Local delivery cancelled",
-        };
+    async cancelShipment(trackingNo) {
+        return { success: true, trackingNo, message: "Local delivery cancelled" };
     }
 }
 
-module.exports = SelfAdapter;
+export default SelfAdapter;

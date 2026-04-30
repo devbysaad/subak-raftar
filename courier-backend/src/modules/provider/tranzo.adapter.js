@@ -1,12 +1,11 @@
-const { MockAdapter } = require("./mock.adapter");
+import { MockAdapter } from "./mock.adapter.js";
 
 class TranzoAdapter extends MockAdapter {
-  constructor(keys) {
-    super("tranzo");
-    this.apiKey = keys?.apiKey;
-    this.apiPassword = keys?.apiPassword;
-    // TODO: replace mock calls with real Tranzo API
-  }
+    constructor(keys) {
+        super("tranzo");
+        this.apiKey      = keys?.apiKey;
+        this.apiPassword = keys?.apiPassword;
+    }
 }
 
-module.exports = TranzoAdapter;
+export default TranzoAdapter;

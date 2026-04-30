@@ -1,32 +1,32 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST,
-  port:   parseInt(process.env.SMTP_PORT) || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+    host:   process.env.SMTP_HOST,
+    port:   parseInt(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
 });
 
-const sendEmail = async ({ to, subject, html }) => {
-  try {
-    await transporter.sendMail({
-      from: `"Subak Raftar" <${process.env.SMTP_USER}>`,
-      to,
-      subject,
-      html,
-    });
-    console.log(`[Email] Sent to ${to} — ${subject}`);
-  } catch (err) {
-    console.error(`[Email] Failed to send to ${to}:`, err.message);
-  }
+export const sendEmail = async ({ to, subject, html }) => {
+    try {
+        await transporter.sendMail({
+            from: `"Subak Raftar" <${process.env.SMTP_USER}>`,
+            to,
+            subject,
+            html,
+        });
+        console.log(`[Email] Sent to ${to} — ${subject}`);
+    } catch (err) {
+        console.error(`[Email] Failed to send to ${to}:`, err.message);
+    }
 };
 
-const shipmentStatusEmail = ({ receiverName, trackingNo, status, provider }) => ({
-  subject: `Your shipment ${trackingNo} — ${status.replace(/_/g, " ").toUpperCase()}`,
-  html: `
+export const shipmentStatusEmail = ({ receiverName, trackingNo, status, provider }) => ({
+    subject: `Your shipment ${trackingNo} — ${status.replace(/_/g, " ").toUpperCase()}`,
+    html: `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color: #1a1a1a">Shipment Update</h2>
       <p>Hi <strong>${receiverName}</strong>,</p>
@@ -40,5 +40,3 @@ const shipmentStatusEmail = ({ receiverName, trackingNo, status, provider }) => 
     </div>
   `,
 });
-
-module.exports = { sendEmail, shipmentStatusEmail };

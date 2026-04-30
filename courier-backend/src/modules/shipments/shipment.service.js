@@ -1,15 +1,14 @@
-const Shipment = require("./shipment.model");
-const statusHistory = require("../status-history/statusHistory.service");
-const { getAdapter } = require("../provider/provider.factory");
-const { paginate } = require("../../utils/pagination.util");
-const Settings = require("../settings/settings.model");
+import Shipment from "./shipment.model.js";
+import * as statusHistory from "../status-history/statusHistory.service.js";
+import { getAdapter } from "../provider/provider.factory.js";
+import { paginate } from "../../utils/pagination.util.js";
+import Settings from "../settings/settings.model.js";
 
-const createShipment = async (data, userId) => {
-    // Load system-wide provider keys from single settings document
+export const createShipment = async (data, userId) => {
     const settings = await Settings.findOne().lean();
-    const keys = settings?.providerKeys?.[data.provider] || {};
-    const adapter = getAdapter(data.provider, keys);
-    const booking = await adapter.bookShipment(data);
+    const keys     = settings?.providerKeys?.[data.provider] || {};
+    const adapter  = getAdapter(data.provider, keys);
+    const booking  = await adapter.bookShipment(data);
 
     const shipment = await Shipment.create({
         ...data,
@@ -20,11 +19,10 @@ const createShipment = async (data, userId) => {
     });
 
     await statusHistory.log(shipment._id, "booked", userId, "Shipment created");
-
     return shipment.toObject();
 };
 
-const getShipments = async (query = {}) => {
+export const getShipments = async (query = {}) => {
     const filter = {};
 
     if (query.status)   filter.status   = query.status;
@@ -55,31 +53,28 @@ const getShipments = async (query = {}) => {
     return paginate(Shipment, filter, query);
 };
 
-const getShipmentById = async (id) => {
+export const getShipmentById = async (id) => {
     const shipment = await Shipment.findById(id).lean();
     if (!shipment) throw Object.assign(new Error("Shipment not found"), { status: 404 });
     return shipment;
 };
 
-const getShipmentWithHistory = async (id) => {
+export const getShipmentWithHistory = async (id) => {
     const shipment = await getShipmentById(id);
     const history  = await statusHistory.getHistory(id);
     return { ...shipment, history };
 };
 
-const updateStatus = async (id, status, userId, note = "") => {
+export const updateStatus = async (id, status, userId, note = "") => {
     const shipment = await Shipment.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true }
+        id, { status }, { new: true }
     ).lean();
     if (!shipment) throw Object.assign(new Error("Shipment not found"), { status: 404 });
-
     await statusHistory.log(id, status, userId, note);
     return shipment;
 };
 
-const cancelShipment = async (id, userId) => {
+export const cancelShipment = async (id, userId) => {
     const shipment = await Shipment.findById(id);
     if (!shipment) throw Object.assign(new Error("Shipment not found"), { status: 404 });
 
@@ -91,60 +86,46 @@ const cancelShipment = async (id, userId) => {
     }
 
     const settings = await Settings.findOne().lean();
-    const keys = settings?.providerKeys?.[shipment.provider] || {};
-    const adapter = getAdapter(shipment.provider, keys);
+    const keys     = settings?.providerKeys?.[shipment.provider] || {};
+    const adapter  = getAdapter(shipment.provider, keys);
     await adapter.cancelShipment(shipment.providerTrackingNo);
 
     return updateStatus(id, "cancelled", userId, "Cancelled by user");
 };
 
-const getCourierAnalytics = async () => {
-    const pipeline = [
+export const getCourierAnalytics = async () => {
+    return Shipment.aggregate([
         {
             $group: {
-                _id:           "$provider",
-                totalBooked:   { $sum: 1 },
-                totalDelivered:{ $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
-                totalFailed:   { $sum: { $cond: [{ $in: ["$status", ["failed", "cancelled"]] }, 1, 0] } },
-                totalInTransit:{ $sum: { $cond: [{ $in: ["$status", ["in_transit", "out_for_delivery", "received"]] }, 1, 0] } },
+                _id:            "$provider",
+                totalBooked:    { $sum: 1 },
+                totalDelivered: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+                totalFailed:    { $sum: { $cond: [{ $in: ["$status", ["failed", "cancelled"]] }, 1, 0] } },
+                totalInTransit: { $sum: { $cond: [{ $in: ["$status", ["in_transit", "out_for_delivery", "received"]] }, 1, 0] } },
             },
         },
         {
             $project: {
-                provider:     "$_id",
-                _id:          0,
-                totalBooked:  1,
+                provider:       "$_id",
+                _id:            0,
+                totalBooked:    1,
                 totalDelivered: 1,
-                totalFailed:  1,
+                totalFailed:    1,
                 totalInTransit: 1,
                 deliveryRatio: {
                     $cond: [
-                        { $eq: ["$totalBooked", 0] },
-                        0,
+                        { $eq: ["$totalBooked", 0] }, 0,
                         { $multiply: [{ $divide: ["$totalDelivered", "$totalBooked"] }, 100] },
                     ],
                 },
                 returnRatio: {
                     $cond: [
-                        { $eq: ["$totalBooked", 0] },
-                        0,
+                        { $eq: ["$totalBooked", 0] }, 0,
                         { $multiply: [{ $divide: ["$totalFailed", "$totalBooked"] }, 100] },
                     ],
                 },
             },
         },
         { $sort: { deliveryRatio: -1 } },
-    ];
-
-    return Shipment.aggregate(pipeline);
-};
-
-module.exports = {
-    createShipment,
-    getShipments,
-    getShipmentById,
-    getShipmentWithHistory,
-    updateStatus,
-    cancelShipment,
-    getCourierAnalytics,
+    ]);
 };

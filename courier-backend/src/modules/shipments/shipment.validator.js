@@ -1,5 +1,5 @@
-const { z } = require("zod");
-const { PROVIDERS } = require("../../config/constants");
+import { z } from "zod";
+import { PROVIDERS } from "../../config/constants.js";
 
 const addressSchema = z.object({
     name:    z.string().min(1),
@@ -8,7 +8,7 @@ const addressSchema = z.object({
     city:    z.string().min(1),
 });
 
-const createShipmentSchema = z.object({
+export const createShipmentSchema = z.object({
     receiver:           addressSchema,
     weight:             z.number().positive(),
     itemType:           z.string().optional(),
@@ -20,17 +20,10 @@ const createShipmentSchema = z.object({
     notes:              z.string().optional(),
 });
 
-const updateStatusSchema = z.object({
+export const updateStatusSchema = z.object({
     status: z.enum([
-        "booked",
-        "received",
-        "in_transit",
-        "out_for_delivery",
-        "delivered",
-        "failed",
-        "cancelled",
+        "booked", "received", "in_transit",
+        "out_for_delivery", "delivered", "failed", "cancelled",
     ]),
     note: z.string().optional(),
 });
-
-module.exports = { createShipmentSchema, updateStatusSchema };

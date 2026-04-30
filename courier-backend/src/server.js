@@ -1,9 +1,9 @@
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
+// ⚠️  env.js MUST be the very first import — it runs before all other modules
+import "./config/env.js";
 
-const app = require("./app");
-const connectDB = require("./config/db");
-const { startTrackingCron } = require("./modules/tracking/tracking.cron");
+import app from "./app.js";
+import connectDB from "./config/db.js";
+import { startTrackingCron } from "./modules/tracking/tracking.cron.js";
 
 const required = ["MONGO_URI", "BETTER_AUTH_SECRET", "FRONTEND_URL"];
 required.forEach((key) => {

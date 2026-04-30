@@ -1,8 +1,7 @@
-const { betterAuth } = require("better-auth");
-const { mongodbAdapter } = require("better-auth/adapters/mongodb");
-const { MongoClient } = require("mongodb");
+import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { MongoClient } from "mongodb";
 
-// Lazily cached MongoDB native client for better-auth adapter
 let cachedClient = global._mongoAuthClient;
 
 const getClient = () => {
@@ -13,12 +12,9 @@ const getClient = () => {
     return cachedClient;
 };
 
-const auth = betterAuth({
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL:
-        process.env.BETTER_AUTH_URL ||
-        process.env.BACKEND_URL ||
-        "http://localhost:5000",
+export const auth = betterAuth({
+    secret:  process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL || process.env.BACKEND_URL || "http://localhost:5000",
     basePath: "/api/auth",
     trustedOrigins: [
         ...(process.env.FRONTEND_URL || "http://localhost:3000")
@@ -34,15 +30,11 @@ const auth = betterAuth({
         requireEmailVerification: false,
     },
     session: {
-        expiresIn: 60 * 60 * 24 * 7, // 7 days
-        updateAge:  60 * 60 * 24,     // rotate session every 24 h
+        expiresIn:  60 * 60 * 24 * 7,
+        updateAge:  60 * 60 * 24,
         cookieCache: {
             enabled: true,
-            maxAge: 60 * 5, // 5 minutes
+            maxAge:  60 * 5,
         },
     },
-    // ⚠️  No hooks here — user creation is handled exclusively in auth.middleware.js
-    //     to avoid double-creation race conditions.
 });
-
-module.exports = { auth };

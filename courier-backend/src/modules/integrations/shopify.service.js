@@ -1,10 +1,10 @@
-const crypto = require("crypto");
-const Shipment = require("../shipments/shipment.model");
-const Settings = require("../settings/settings.model");
-const { getAdapter } = require("../provider/provider.factory");
-const statusHistoryService = require("../status-history/statusHistory.service");
+import crypto from "crypto";
+import Shipment from "../shipments/shipment.model.js";
+import Settings from "../settings/settings.model.js";
+import { getAdapter } from "../provider/provider.factory.js";
+import { log } from "../status-history/statusHistory.service.js";
 
-const verifyShopifyWebhook = (rawBody, signature, secret) => {
+export const verifyShopifyWebhook = (rawBody, signature, secret) => {
     if (!secret || !signature) return false;
     const hash = crypto
         .createHmac("sha256", secret)
@@ -27,7 +27,7 @@ const mapOrderToShipment = (order) => ({
     notes:          `Auto-created from Shopify order #${order.order_number}`,
 });
 
-const handleFulfillmentWebhook = async (order) => {
+export const handleFulfillmentWebhook = async (order) => {
     const exists = await Shipment.findOne({ shopifyOrderId: String(order.id) });
     if (exists) {
         console.log(`[Shopify] Shipment already exists for order ${order.id}`);
@@ -41,10 +41,10 @@ const handleFulfillmentWebhook = async (order) => {
         (p) => settings.providerKeys[p]?.apiKey
     ) || "self";
 
-    const keys     = settings.providerKeys?.[provider] || {};
-    const adapter  = getAdapter(provider, keys);
-    const data     = mapOrderToShipment(order);
-    const booking  = await adapter.bookShipment(data);
+    const keys    = settings.providerKeys?.[provider] || {};
+    const adapter = getAdapter(provider, keys);
+    const data    = mapOrderToShipment(order);
+    const booking = await adapter.bookShipment(data);
 
     const shipment = await Shipment.create({
         ...data,
@@ -54,15 +54,7 @@ const handleFulfillmentWebhook = async (order) => {
         status:             "booked",
     });
 
-    await statusHistoryService.log(
-        shipment._id,
-        "booked",
-        null,
-        `Auto-created from Shopify order #${order.order_number}`
-    );
-
+    await log(shipment._id, "booked", null, `Auto-created from Shopify order #${order.order_number}`);
     console.log(`[Shopify] Shipment created for order ${order.id}`);
     return shipment;
 };
-
-module.exports = { verifyShopifyWebhook, handleFulfillmentWebhook };

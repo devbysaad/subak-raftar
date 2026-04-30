@@ -1,7 +1,8 @@
-const shipmentService = require("./shipment.service");
-const { success, failure } = require("../../utils/response.utils");
+import { success, failure } from "../../utils/response.utils.js";
+import * as shipmentService from "./shipment.service.js";
+import { getHistory } from "../status-history/statusHistory.service.js";
 
-const create = async (req, res) => {
+export const create = async (req, res) => {
     try {
         const shipment = await shipmentService.createShipment(req.body, req.user._id);
         res.status(201).json(success(shipment, "Shipment created"));
@@ -10,7 +11,7 @@ const create = async (req, res) => {
     }
 };
 
-const list = async (req, res) => {
+export const list = async (req, res) => {
     try {
         const data = await shipmentService.getShipments(req.query);
         res.json(success(data));
@@ -19,7 +20,7 @@ const list = async (req, res) => {
     }
 };
 
-const getAnalytics = async (req, res) => {
+export const getAnalytics = async (req, res) => {
     try {
         const data = await shipmentService.getCourierAnalytics();
         res.json(success(data));
@@ -28,7 +29,7 @@ const getAnalytics = async (req, res) => {
     }
 };
 
-const detail = async (req, res) => {
+export const detail = async (req, res) => {
     try {
         const shipment = await shipmentService.getShipmentWithHistory(req.params.id);
         res.json(success(shipment));
@@ -37,7 +38,7 @@ const detail = async (req, res) => {
     }
 };
 
-const updateStatus = async (req, res) => {
+export const updateStatus = async (req, res) => {
     try {
         const { status, note } = req.body;
         const shipment = await shipmentService.updateStatus(req.params.id, status, req.user._id, note);
@@ -47,7 +48,7 @@ const updateStatus = async (req, res) => {
     }
 };
 
-const cancel = async (req, res) => {
+export const cancel = async (req, res) => {
     try {
         const shipment = await shipmentService.cancelShipment(req.params.id, req.user._id);
         res.json(success(shipment, "Shipment cancelled"));
@@ -56,7 +57,7 @@ const cancel = async (req, res) => {
     }
 };
 
-const bulkCreate = async (req, res) => {
+export const bulkCreate = async (req, res) => {
     try {
         const items = Array.isArray(req.body) ? req.body : req.body.shipments;
         if (!items || items.length === 0) {
@@ -84,14 +85,4 @@ const bulkCreate = async (req, res) => {
     } catch (err) {
         res.status(500).json(failure(err.message));
     }
-};
-
-module.exports = {
-    create,
-    list,
-    getAnalytics,
-    detail,
-    updateStatus,
-    cancel,
-    bulkCreate,
 };

@@ -1,21 +1,20 @@
-const Complaint = require("./complaint.model");
-const Shipment  = require("../shipments/shipment.model");
+import Complaint from "./complaint.model.js";
+import Shipment  from "../shipments/shipment.model.js";
 
-const createComplaint = async (data, userId) => {
-    // Try to link to a shipment by tracking number
+export const createComplaint = async (data, userId) => {
     const shipment = await Shipment.findOne({ providerTrackingNo: data.parcelNo }).lean();
     return Complaint.create({
-        parcelNo:  data.parcelNo,
+        parcelNo:   data.parcelNo,
         shipmentId: shipment?._id || null,
-        status:    data.status  || "open",
-        remarks:   data.remarks || "",
-        rStatus:   data.rStatus || "",
-        cStatus:   data.cStatus || "",
-        createdBy: userId,
+        status:     data.status  || "open",
+        remarks:    data.remarks || "",
+        rStatus:    data.rStatus || "",
+        cStatus:    data.cStatus || "",
+        createdBy:  userId,
     });
 };
 
-const getComplaints = async (query = {}) => {
+export const getComplaints = async (query = {}) => {
     const filter = {};
     if (query.parcelNo) filter.parcelNo = { $regex: query.parcelNo, $options: "i" };
     if (query.rStatus)  filter.rStatus  = query.rStatus;
@@ -31,15 +30,9 @@ const getComplaints = async (query = {}) => {
     const skip  = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
-        Complaint.find(filter)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate("createdBy", "name"),
+        Complaint.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("createdBy", "name"),
         Complaint.countDocuments(filter),
     ]);
 
     return { items, total, page, pages: Math.ceil(total / limit) };
 };
-
-module.exports = { createComplaint, getComplaints };

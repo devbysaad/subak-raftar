@@ -1,7 +1,5 @@
-const User = require("../users/user.model");
+import User from "../users/user.model.js";
 
-const findByAuthId = async (authId) => {
+export const findByAuthId = async (authId) => {
     return User.findOne({ authId }).lean();
 };
-
-module.exports = { findByAuthId };

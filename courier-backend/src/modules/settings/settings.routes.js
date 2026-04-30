@@ -1,18 +1,15 @@
-const { Router } = require("express");
-const authMiddleware = require("../../middleware/auth.middleware");
-const { requireRole } = require("../../middleware/role.middleware");
-const { ROLES } = require("../../config/constants");
-const { get, update, updateShopify, updateProvider } = require("./settings.controller");
+import { Router } from "express";
+import authMiddleware from "../../middleware/auth.middleware.js";
+import { requireRole } from "../../middleware/role.middleware.js";
+import { ROLES } from "../../config/constants.js";
+import { get, update, updateShopify, updateProvider } from "./settings.controller.js";
 
 const router = Router();
 router.use(authMiddleware);
 
-// Any authenticated user can read settings (secrets are stripped for non-admins)
-router.get("/", get);
+router.get("/",                       get);
+router.patch("/",                     requireRole(ROLES.ADMIN), update);
+router.patch("/shopify",              requireRole(ROLES.ADMIN), updateShopify);
+router.patch("/providers/:provider",  requireRole(ROLES.ADMIN), updateProvider);
 
-// Admin only — write operations
-router.patch("/",                        requireRole(ROLES.ADMIN), update);
-router.patch("/shopify",                 requireRole(ROLES.ADMIN), updateShopify);
-router.patch("/providers/:provider",     requireRole(ROLES.ADMIN), updateProvider);
-
-module.exports = router;
+export default router;

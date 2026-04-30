@@ -1,4 +1,4 @@
-const { failure } = require("../utils/response.utils");
+import { failure } from "../utils/response.utils.js";
 
 const errorMiddleware = (err, req, res, next) => {
     console.error(`[${req.method}] ${req.path}`, err.message);
@@ -24,4 +24,4 @@ const errorMiddleware = (err, req, res, next) => {
     res.status(err.status || 500).json(failure(err.message || "Internal server error"));
 };
 
-module.exports = errorMiddleware;
+export default errorMiddleware;

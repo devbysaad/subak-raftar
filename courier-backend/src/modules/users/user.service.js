@@ -1,16 +1,16 @@
-const User = require("./user.model");
+import User from "./user.model.js";
 
 const UPDATABLE_FIELDS = ["name", "phone", "isActive", "role"];
 
-const getAllUsers = async () => {
+export const getAllUsers = async () => {
     return User.find().lean();
 };
 
-const getUserById = async (id) => {
+export const getUserById = async (id) => {
     return User.findById(id).lean();
 };
 
-const createUser = async ({ name, email, phone, role }) => {
+export const createUser = async ({ name, email, phone, role }) => {
     const exists = await User.findOne({ email: email.toLowerCase() }).lean();
     if (exists) {
         throw Object.assign(new Error("A user with this email already exists"), { status: 409 });
@@ -19,7 +19,7 @@ const createUser = async ({ name, email, phone, role }) => {
     return user.toObject();
 };
 
-const updateUser = async (id, data) => {
+export const updateUser = async (id, data) => {
     const safeData = {};
     UPDATABLE_FIELDS.forEach((field) => {
         if (data[field] !== undefined) safeData[field] = data[field];
@@ -34,7 +34,7 @@ const updateUser = async (id, data) => {
     return updated;
 };
 
-const deactivateUser = async (id) => {
+export const deactivateUser = async (id) => {
     const updated = await User.findByIdAndUpdate(
         id,
         { isActive: false },
@@ -45,23 +45,10 @@ const deactivateUser = async (id) => {
     return updated;
 };
 
-/**
- * findOrCreateFromAuth — called from auth middleware on first-ever login.
- * Safe: uses findOne first, creates only if not found.
- */
-const findOrCreateFromAuth = async ({ authId, name, email }) => {
+export const findOrCreateFromAuth = async ({ authId, name, email }) => {
     let user = await User.findOne({ authId }).lean();
     if (user) return user;
 
     const created = await User.create({ authId, name, email, role: "employee" });
     return created.toObject();
-};
-
-module.exports = {
-    getAllUsers,
-    getUserById,
-    createUser,
-    updateUser,
-    deactivateUser,
-    findOrCreateFromAuth,
 };

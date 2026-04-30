@@ -1,6 +1,6 @@
-const { Router } = require("express");
-const authMiddleware = require("../../middleware/auth.middleware");
-const { create, list } = require("./complaint.controller");
+import { Router } from "express";
+import authMiddleware from "../../middleware/auth.middleware.js";
+import { create, list } from "./complaint.controller.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -8,4 +8,4 @@ router.use(authMiddleware);
 router.post("/", create);
 router.get("/",  list);
 
-module.exports = router;
+export default router;

@@ -1,9 +1,9 @@
-const ROLES = {
+export const ROLES = {
     ADMIN: "admin",
     EMPLOYEE: "employee",
 };
 
-const SHIPMENT_STATUS = {
+export const SHIPMENT_STATUS = {
     BOOKED: "booked",
     RECEIVED: "received",
     IN_TRANSIT: "in_transit",
@@ -13,18 +13,16 @@ const SHIPMENT_STATUS = {
     CANCELLED: "cancelled",
 };
 
-const COD_STATUS = {
+export const COD_STATUS = {
     PENDING: "pending",
     COLLECTED: "collected",
     REMITTED: "remitted",
 };
 
-const PROVIDERS = {
+export const PROVIDERS = {
     TCS: "tcs",
     LEOPARDS: "leopards",
     TRAX: "trax",
     MP: "mp",
     SELF: "self",
 };
-
-module.exports = { ROLES, SHIPMENT_STATUS, COD_STATUS, PROVIDERS };

@@ -1,16 +1,13 @@
-/**
- * seed.js — wipes ALL data and re-seeds fresh.
- *
- * Uses better-auth's programmatic API (auth.api.signUpEmail) to create users
- * so passwords are hashed correctly with better-auth's own algorithm.
- *
- * Run: node src/scripts/seed.js
- */
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
+// ⚠️  env.js MUST be the very first import
+import "./env.js";
 
-const mongoose = require("mongoose");
-const { MongoClient } = require("mongodb");
+import mongoose from "mongoose";
+import { MongoClient } from "mongodb";
+import { auth } from "../modules/auth/auth.config.js";
+import User from "../modules/users/user.model.js";
+import Shipment from "../modules/shipments/shipment.model.js";
+import StatusHistory from "../modules/status-history/statusHistory.model.js";
+import Settings from "../modules/settings/settings.model.js";
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) { console.error("MONGO_URI not set"); process.exit(1); }
@@ -47,17 +44,12 @@ async function seed() {
     const db = client.db();
 
     await mongoose.connect(MONGO_URI);
-    const User     = require("../modules/users/user.model");
-    const Shipment = require("../modules/shipments/shipment.model");
-    const History  = require("../modules/status-history/statusHistory.model");
-    const Settings = require("../modules/settings/settings.model");
 
-    // ── 1. Wipe everything ────────────────────────────────────────────────────
     console.log("🗑️   Clearing all collections...");
     await Promise.all([
         User.deleteMany({}),
         Shipment.deleteMany({}),
-        History.deleteMany({}),
+        StatusHistory.deleteMany({}),
         Settings.deleteMany({}),
         db.collection("user").deleteMany({}),
         db.collection("session").deleteMany({}),
@@ -66,35 +58,23 @@ async function seed() {
     ]);
     console.log("✅  All collections cleared.\n");
 
-    // ── 2. Create users via better-auth programmatic API ──────────────────────
-    // This ensures password hashing matches what better-auth expects at login.
-    const { auth } = require("../modules/auth/auth.config");
-
     const createAuthUser = async (name, email, password) => {
-        const result = await auth.api.signUpEmail({
-            body: { name, email, password },
-        });
-        if (!result?.user?.id) {
-            throw new Error(`signUpEmail returned no user ID for ${email}`);
-        }
+        const result = await auth.api.signUpEmail({ body: { name, email, password } });
+        if (!result?.user?.id) throw new Error(`signUpEmail returned no user ID for ${email}`);
         return result.user.id;
     };
 
     console.log("🔐  Creating admin account...");
     const adminAuthId = await createAuthUser(ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD);
-
-    // Elevate admin in the shared user collection
-    const adminUser = await User.findOneAndUpdate(
+    const adminUser   = await User.findOneAndUpdate(
         { email: ADMIN_EMAIL },
         { $set: { authId: adminAuthId, role: "admin", isActive: true } },
         { new: true }
     ).lean();
     console.log(`✅  Admin: ${adminUser.email} (role: admin)\n`);
 
-    // ── 3. Create employees ───────────────────────────────────────────────────
     console.log("👥  Creating employees...");
     const empDocs = [];
-
     for (const emp of EMPLOYEES) {
         const empAuthId = await createAuthUser(emp.name, emp.email, emp.password);
         const doc = await User.findOneAndUpdate(
@@ -106,7 +86,6 @@ async function seed() {
         console.log(`   ✅  ${doc.name}`);
     }
 
-    // ── 4. Seed 40 shipments ──────────────────────────────────────────────────
     console.log("\n📦  Seeding shipments...");
     const allUsers = [adminUser, ...empDocs];
     const toInsert = [];
@@ -116,7 +95,6 @@ async function seed() {
         const provider  = pick(PROVIDERS);
         const isCOD     = Math.random() > 0.5;
         const createdAt = new Date(Date.now() - rand(0, 30) * 86400000);
-
         toInsert.push({
             createdBy:          pick(allUsers)._id,
             receiver:           addr(),
@@ -138,9 +116,8 @@ async function seed() {
     const inserted = await Shipment.insertMany(toInsert);
     console.log(`✅  ${inserted.length} shipments created.`);
 
-    // ── 5. Status history ─────────────────────────────────────────────────────
     console.log("\n🕓  Seeding status history...");
-    await History.insertMany(
+    await StatusHistory.insertMany(
         inserted.map((s) => ({
             shipmentId: s._id,
             status:     s.status,
@@ -151,7 +128,6 @@ async function seed() {
     );
     console.log(`✅  ${inserted.length} history entries created.`);
 
-    // ── 6. Settings ───────────────────────────────────────────────────────────
     await Settings.create({
         companyName: "Subak Raftar",
         email:       ADMIN_EMAIL,
@@ -166,11 +142,9 @@ async function seed() {
     console.log("\n┌──────────────────────────────────────────────┐");
     console.log("│  🎉  Seed complete!                           │");
     console.log("│                                               │");
-    console.log("│  Admin Login:                                 │");
     console.log(`│  Email:    ${ADMIN_EMAIL}        │`);
     console.log(`│  Password: ${ADMIN_PASSWORD}              │`);
-    console.log("│                                               │");
-    console.log("│  Employee password: employee@123              │");
+    console.log("│  Employee: employee@123                       │");
     console.log("└──────────────────────────────────────────────┘\n");
     process.exit(0);
 }
