@@ -54,5 +54,11 @@ export const auth = betterAuth({
         crossSubDomainCookies: {
             enabled: false,
         },
+        // Required for cross-origin cookies (frontend & backend on different domains)
+        cookieOptions: {
+            sameSite: "none",
+            secure:   true,
+            path:     "/",
+        },
     },
 });
