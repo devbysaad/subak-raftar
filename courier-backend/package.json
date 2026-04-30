@@ -4,6 +4,7 @@
   "description": "Courier dashboard backend — Node + Express + MongoDB",
   "type": "module",
   "main": "src/server.js",
+  "engines": { "node": ">=20" },
   "scripts": {
     "dev": "nodemon --exec \"node --env-file=.env src/server.js\" src/server.js",
     "start": "node --env-file=.env src/server.js",
