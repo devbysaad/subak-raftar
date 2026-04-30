@@ -14,7 +14,9 @@ const getClient = () => {
 
 export const auth = betterAuth({
     secret:  process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || "https://subak-raftar-server.vercel.app",
+    // baseURL = where auth endpoints live from the browser's perspective.
+    // With the Vercel rewrite proxy, browsers hit the FRONTEND origin for /api/auth/*
+    baseURL: process.env.BETTER_AUTH_URL || "https://subak-raftar.vercel.app",
     basePath: "/api/auth",
     trustedOrigins: [
         "https://subak-raftar.vercel.app",
@@ -36,16 +38,6 @@ export const auth = betterAuth({
         cookieCache: {
             enabled: true,
             maxAge:  60 * 5,
-        },
-    },
-    advanced: {
-        crossSubDomainCookies: {
-            enabled: false,
-        },
-        defaultCookieAttributes: {
-            sameSite: "none",
-            secure:   true,
-            path:     "/",
         },
     },
 });

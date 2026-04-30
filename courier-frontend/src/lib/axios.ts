@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// In production, API calls go through the Vercel rewrite (/api/* → backend)
+// so baseURL must be empty (same-origin). In dev, it points to localhost:5000.
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || '',
   withCredentials: true,
 });
 
