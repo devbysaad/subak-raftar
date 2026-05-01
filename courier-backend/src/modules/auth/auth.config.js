@@ -14,7 +14,7 @@ const getClient = () => {
 
 export const auth = betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || "https://subak-raftar.vercel.app",
+    baseURL: process.env.BETTER_AUTH_URL || "https://subak-raftar-server.vercel.app",
     basePath: "/api/auth",
     trustedOrigins: [
         "https://subak-raftar.vercel.app",
