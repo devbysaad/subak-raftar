@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 
-let _auth = null;
+let _auth   = null;
+let _client = null;
 
 export const getAuth = async () => {
     if (_auth) return _auth;
@@ -8,12 +9,22 @@ export const getAuth = async () => {
     const { betterAuth }     = await import("better-auth");
     const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
 
-    const client = new MongoClient(process.env.MONGO_URI);
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) throw new Error("MONGO_URI not set");
+
+    // Reuse the cached client if possible (serverless warm-start)
+    if (!_client) {
+        _client = new MongoClient(mongoUri);
+        await _client.connect();
+    }
+
     const isProd = process.env.NODE_ENV === "production";
 
     _auth = betterAuth({
         secret:   process.env.BETTER_AUTH_SECRET,
-        baseURL:  process.env.BETTER_AUTH_URL ?? "http://localhost:5000",
+        baseURL:  process.env.BETTER_AUTH_URL ?? (isProd
+            ? "https://subak-raftar-server.vercel.app"
+            : "http://localhost:5000"),
         basePath: "/api/auth",
         trustedOrigins: [
             "https://subak-raftar.vercel.app",
@@ -22,7 +33,7 @@ export const getAuth = async () => {
             "http://localhost:5000",
             "http://localhost:5173",
         ],
-        database: mongodbAdapter(client.db()),
+        database: mongodbAdapter(_client.db()),
         emailAndPassword: {
             enabled: true,
             requireEmailVerification: false,
@@ -38,10 +49,10 @@ export const getAuth = async () => {
                 domain:  isProd ? ".vercel.app" : undefined,
             },
             defaultCookieAttributes: {
-                secure:      isProd,              // false on localhost (HTTP), true on Vercel (HTTPS)
+                secure:      isProd,
                 httpOnly:    true,
-                sameSite:    isProd ? "none" : "lax",  // "none" needs HTTPS — breaks localhost
-                partitioned: isProd,              // partitioned also requires secure
+                sameSite:    isProd ? "none" : "lax",
+                partitioned: isProd,
             },
         },
     });
