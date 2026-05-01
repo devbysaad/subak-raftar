@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { bearer } from "better-auth/plugins";
 
 let _auth   = null;
 let _client = null;
@@ -38,6 +39,9 @@ export const getAuth = async () => {
             enabled: true,
             requireEmailVerification: false,
         },
+        plugins: [
+            bearer(),
+        ],
         session: {
             expiresIn:   60 * 60 * 24 * 7,
             updateAge:   60 * 60 * 24,

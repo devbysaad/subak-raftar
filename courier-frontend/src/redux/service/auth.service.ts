@@ -31,16 +31,21 @@ function extractUser(data: Record<string, unknown>): User | null {
 export const authService = {
   async signup(payload: { name: string; email: string; password: string }) {
     const res = await axiosInstance.post(API.AUTH.SIGN_UP, payload);
+    const token = res.data?.token;
+    if (token) localStorage.setItem('ba_token', token);
     return res.data;
   },
 
   async login(payload: { email: string; password: string }) {
     const res = await axiosInstance.post(API.AUTH.SIGN_IN, payload);
+    const token = res.data?.token;
+    if (token) localStorage.setItem('ba_token', token);
     return res.data;
   },
 
   async logout() {
     await axiosInstance.post(API.AUTH.SIGN_OUT);
+    localStorage.removeItem('ba_token');
   },
 
   async getMe(): Promise<User> {
