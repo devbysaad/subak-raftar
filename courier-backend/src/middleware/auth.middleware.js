@@ -1,14 +1,16 @@
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../modules/auth/auth.config.js";
+import { getAuth } from "../modules/auth/auth.config.js";
 import User from "../modules/users/user.model.js";
 import { failure } from "../utils/response.utils.js";
 
 const authMiddleware = async (req, res, next) => {
     try {
+        const auth = await getAuth();
+
         const session = await auth.api.getSession({
             headers: fromNodeHeaders(req.headers),
         });
-        // session is undefined work on this 
+
         if (!session?.user) {
             return res.status(401).json(failure("Unauthorized"));
         }
@@ -39,13 +41,8 @@ const authMiddleware = async (req, res, next) => {
             }
         }
 
-        if (!user) {
-            return res.status(500).json(failure("Could not resolve user from session"));
-        }
-
-        if (!user.isActive) {
-            return res.status(403).json(failure("Your account has been deactivated"));
-        }
+        if (!user)          return res.status(500).json(failure("Could not resolve user from session"));
+        if (!user.isActive) return res.status(403).json(failure("Your account has been deactivated"));
 
         req.user = user;
         next();

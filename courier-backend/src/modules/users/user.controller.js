@@ -1,4 +1,4 @@
-import { auth } from "../auth/auth.config.js";
+import { getAuth } from "../auth/auth.config.js";
 import User from "./user.model.js";
 import { success, failure } from "../../utils/response.utils.js";
 import {
@@ -28,11 +28,10 @@ export const createUser = async (req, res) => {
             return res.status(400).json(failure("name, email and password are required"));
         }
 
+        const auth = await getAuth();
         let authId;
         try {
-            const result = await auth.api.signUpEmail({
-                body: { name, email, password },
-            });
+            const result = await auth.api.signUpEmail({ body: { name, email, password } });
             authId = result?.user?.id;
         } catch (authErr) {
             const msg = authErr?.message || "Failed to create auth account";
@@ -42,9 +41,7 @@ export const createUser = async (req, res) => {
             return res.status(500).json(failure(msg));
         }
 
-        if (!authId) {
-            return res.status(500).json(failure("Auth signup succeeded but returned no user ID"));
-        }
+        if (!authId) return res.status(500).json(failure("Auth signup returned no user ID"));
 
         let user = await User.findOne({ authId });
         if (!user) {
@@ -56,9 +53,7 @@ export const createUser = async (req, res) => {
 
         res.status(201).json(success(user.toObject(), "User created successfully"));
     } catch (err) {
-        if (err.code === 11000) {
-            return res.status(409).json(failure("A user with this email already exists"));
-        }
+        if (err.code === 11000) return res.status(409).json(failure("A user with this email already exists"));
         res.status(err.status || 500).json(failure(err.message));
     }
 };

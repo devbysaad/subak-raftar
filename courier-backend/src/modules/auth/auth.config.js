@@ -1,52 +1,58 @@
-import { betterAuth } from "better-auth";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 
-let cachedClient = global._mongoAuthClient;
+let _auth = null;
 
-const getClient = () => {
-    if (!cachedClient) {
-        if (!process.env.MONGO_URI) throw new Error("MONGO_URI is not defined");
-        cachedClient = global._mongoAuthClient = new MongoClient(process.env.MONGO_URI);
-    }
-    return cachedClient;
+export const getAuth = async () => {
+    if (_auth) return _auth;
+
+    const { betterAuth }     = await import("better-auth");
+    const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
+
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) throw new Error("MONGO_URI not set");
+
+    const client = new MongoClient(mongoUri);
+
+    const backendUrl   = process.env.BETTER_AUTH_URL || "https://subak-raftar-server.vercel.app";
+    const frontendUrls = (process.env.FRONTEND_URL   || "https://subak-raftar.vercel.app")
+        .split(",")
+        .map((u) => u.trim());
+
+    _auth = betterAuth({
+        secret:   process.env.BETTER_AUTH_SECRET,
+        baseURL:  backendUrl,
+        basePath: "/api/auth",
+        trustedOrigins: [
+            ...frontendUrls,
+            "https://subak-raftar.vercel.app",
+            "https://subak-raftar-server.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5000",
+            "http://localhost:5173",
+        ],
+        database: mongodbAdapter(client.db()),
+        emailAndPassword: {
+            enabled: true,
+            requireEmailVerification: false,
+        },
+        session: {
+            expiresIn:   60 * 60 * 24 * 7,
+            updateAge:   60 * 60 * 24,
+            cookieCache: { enabled: true, maxAge: 60 * 5 },
+        },
+        advanced: {
+            crossSubDomainCookies: {
+                enabled: true,
+                domain:  ".vercel.app",
+            },
+            defaultCookieAttributes: {
+                secure:      true,
+                httpOnly:    true,
+                sameSite:    "none",
+                partitioned: true,
+            },
+        },
+    });
+
+    return _auth;
 };
-
-const isProd = process.env.NODE_ENV === "production";
-
-export const auth = betterAuth({
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
-    basePath: "/api/auth",
-    trustedOrigins: [
-        ...(process.env.FRONTEND_URL || "http://localhost:3000")
-            .split(",")
-            .map((o) => o.trim()),
-        process.env.BETTER_AUTH_URL || "http://localhost:5000",
-        "http://localhost:5173",
-    ],
-    get database() {
-        return mongodbAdapter(getClient().db());
-    },
-    emailAndPassword: {
-        enabled: true,
-        requireEmailVerification: false,
-    },
-    session: {
-        expiresIn: 60 * 60 * 24 * 7,
-        updateAge: 60 * 60 * 24,
-        cookieCache: { enabled: true, maxAge: 60 * 5 },
-    },
-    advanced: {
-        crossSubDomainCookies: {
-            enabled: isProd,
-            domain: isProd ? ".vercel.app" : undefined,
-        },
-        defaultCookieAttributes: {
-            secure: isProd,
-            httpOnly: true,
-            sameSite: isProd ? "none" : "lax",
-            partitioned: isProd,
-        },
-    },
-});

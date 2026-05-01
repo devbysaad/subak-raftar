@@ -3,7 +3,7 @@ import "./env.js";
 
 import mongoose from "mongoose";
 import { MongoClient } from "mongodb";
-import { auth } from "../modules/auth/auth.config.js";
+import { createAuthUser } from "../modules/auth/auth.service.js";
 import User from "../modules/users/user.model.js";
 import Shipment from "../modules/shipments/shipment.model.js";
 import StatusHistory from "../modules/status-history/statusHistory.model.js";
@@ -58,14 +58,8 @@ async function seed() {
     ]);
     console.log("✅  All collections cleared.\n");
 
-    const createAuthUser = async (name, email, password) => {
-        const result = await auth.api.signUpEmail({ body: { name, email, password } });
-        if (!result?.user?.id) throw new Error(`signUpEmail returned no user ID for ${email}`);
-        return result.user.id;
-    };
-
     console.log("🔐  Creating admin account...");
-    const adminAuthId = await createAuthUser(ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD);
+    const adminAuthId = await createAuthUser({ name: ADMIN_NAME, email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
     const adminUser   = await User.findOneAndUpdate(
         { email: ADMIN_EMAIL },
         { $set: { authId: adminAuthId, role: "admin", isActive: true } },
@@ -76,7 +70,7 @@ async function seed() {
     console.log("👥  Creating employees...");
     const empDocs = [];
     for (const emp of EMPLOYEES) {
-        const empAuthId = await createAuthUser(emp.name, emp.email, emp.password);
+        const empAuthId = await createAuthUser({ name: emp.name, email: emp.email, password: emp.password });
         const doc = await User.findOneAndUpdate(
             { email: emp.email },
             { $set: { authId: empAuthId, role: "employee", isActive: true } },
