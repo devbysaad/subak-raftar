@@ -1,21 +1,18 @@
-// ⚠️  env.js MUST be the very first import — it runs before all other modules
 import "./config/env.js";
 
 import app from "./app.js";
-import connectDB from "./config/db.js";
-import { startTrackingCron } from "./modules/tracking/tracking.cron.js";
+import { connectDB } from "./config/db.js";
 
-const required = ["MONGO_URI", "BETTER_AUTH_SECRET", "FRONTEND_URL"];
-required.forEach((key) => {
-    if (!process.env[key]) throw new Error(`Missing env variable: ${key}`);
-});
+const PORT = process.env.PORT || 5000;
 
-const start = async () => {
+// Local dev
+if (process.env.NODE_ENV !== "production") {
     await connectDB();
-    startTrackingCron();
-    app.listen(process.env.PORT || 5000, () => {
-        console.log(`[Server] Running on port ${process.env.PORT || 5000}`);
-    });
-};
+    app.listen(PORT, () => console.log(`[Server] Running on port ${PORT}`));
+}
 
-start();
+// Vercel serverless export
+export default async (req, res) => {
+    await connectDB();
+    return app(req, res);
+};

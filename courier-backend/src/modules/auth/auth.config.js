@@ -12,15 +12,17 @@ const getClient = () => {
     return cachedClient;
 };
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || "https://subak-raftar-server.vercel.app",
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
     basePath: "/api/auth",
     trustedOrigins: [
-        "https://subak-raftar.vercel.app",
-        "https://subak-raftar-server.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:5000",
+        ...(process.env.FRONTEND_URL || "http://localhost:3000")
+            .split(",")
+            .map((o) => o.trim()),
+        process.env.BETTER_AUTH_URL || "http://localhost:5000",
         "http://localhost:5173",
     ],
     get database() {
@@ -33,23 +35,18 @@ export const auth = betterAuth({
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
-        cookieCache: {
-            enabled: true,
-            maxAge: 60 * 5,
-        },
+        cookieCache: { enabled: true, maxAge: 60 * 5 },
     },
-
-    // ── cross-domain cookie fix for Vercel ──────────────────────────
     advanced: {
-        crossSubdomainCookies: {
-            enabled: true,
-            domain: ".vercel.app",
+        crossSubDomainCookies: {
+            enabled: isProd,
+            domain: isProd ? ".vercel.app" : undefined,
         },
         defaultCookieAttributes: {
-            secure: true,
+            secure: isProd,
             httpOnly: true,
-            sameSite: "none",
-            partitioned: true,
+            sameSite: isProd ? "none" : "lax",
+            partitioned: isProd,
         },
     },
 });

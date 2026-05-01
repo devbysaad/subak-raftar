@@ -13,19 +13,16 @@ import invoiceRoutes     from "./modules/invoices/invoice.routes.js";
 
 const app = express();
 
-const ALLOWED_ORIGINS = [
-    ...(process.env.FRONTEND_URL || "http://localhost:3000")
-        .split(",")
-        .map((o) => o.trim()),
-    `http://localhost:${process.env.PORT || 5000}`,
-];
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
+    .split(",")
+    .map((o) => o.trim());
 
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
         if (origin.endsWith(".vercel.app")) return callback(null, true);
-        return callback(new Error(`CORS: origin ${origin} not allowed`));
+        return callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
     optionsSuccessStatus: 204,
@@ -47,7 +44,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/api/health", (_, res) => res.json({ status: "ok" }));
+app.get("/api/health", (_, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
 app.use("/api/auth",         authRoutes);
 app.use("/api/users",        userRoutes);
