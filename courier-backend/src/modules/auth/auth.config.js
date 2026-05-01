@@ -9,10 +9,11 @@ export const getAuth = async () => {
     const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
 
     const client = new MongoClient(process.env.MONGO_URI);
+    const isProd = process.env.NODE_ENV === "production";
 
     _auth = betterAuth({
         secret:   process.env.BETTER_AUTH_SECRET,
-        baseURL:  process.env.BETTER_AUTH_URL ?? "https://subak-raftar-server.vercel.app",
+        baseURL:  process.env.BETTER_AUTH_URL ?? "http://localhost:5000",
         basePath: "/api/auth",
         trustedOrigins: [
             "https://subak-raftar.vercel.app",
@@ -33,14 +34,14 @@ export const getAuth = async () => {
         },
         advanced: {
             crossSubDomainCookies: {
-                enabled: true,
-                domain:  ".vercel.app",
+                enabled: isProd,
+                domain:  isProd ? ".vercel.app" : undefined,
             },
             defaultCookieAttributes: {
-                secure:      true,
+                secure:      isProd,              // false on localhost (HTTP), true on Vercel (HTTPS)
                 httpOnly:    true,
-                sameSite:    "none",
-                partitioned: true,
+                sameSite:    isProd ? "none" : "lax",  // "none" needs HTTPS — breaks localhost
+                partitioned: isProd,              // partitioned also requires secure
             },
         },
     });
