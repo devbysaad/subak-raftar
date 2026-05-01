@@ -5,9 +5,7 @@
       "src": "src/server.js",
       "use": "@vercel/node@3",
       "config": {
-        "includeFiles": [
-          "src/**"
-        ]
+        "includeFiles": ["src/**"]
       }
     }
   ],
@@ -15,12 +13,6 @@
     {
       "src": "/(.*)",
       "dest": "src/server.js"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://subak-raftar-server.vercel.app/api/:path*"
     }
   ]
 }
