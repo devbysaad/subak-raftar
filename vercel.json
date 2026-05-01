@@ -4,15 +4,10 @@
     {
       "src": "courier-backend/src/server.js",
       "use": "@vercel/node@3",
-      "config": {
-        "includeFiles": ["courier-backend/src/**"]
-      }
+      "config": { "includeFiles": ["courier-backend/src/**"] }
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "courier-backend/src/server.js"
-    }
+    { "src": "/(.*)", "dest": "courier-backend/src/server.js" }
   ]
 }

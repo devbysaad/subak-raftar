@@ -1,4 +1,3 @@
-import { fromNodeHeaders } from "better-auth/node";
 import { getAuth } from "../modules/auth/auth.config.js";
 import User from "../modules/users/user.model.js";
 import { failure } from "../utils/response.utils.js";
@@ -6,6 +5,7 @@ import { failure } from "../utils/response.utils.js";
 const authMiddleware = async (req, res, next) => {
     try {
         const auth = await getAuth();
+        const { fromNodeHeaders } = await import("better-auth/node");
 
         const session = await auth.api.getSession({
             headers: fromNodeHeaders(req.headers),
@@ -21,7 +21,6 @@ const authMiddleware = async (req, res, next) => {
 
         if (!user) {
             user = await User.findOne({ email: email.toLowerCase() }).lean();
-
             if (user) {
                 await User.updateOne({ _id: user._id }, { $set: { authId } });
                 user = { ...user, authId };
@@ -31,18 +30,15 @@ const authMiddleware = async (req, res, next) => {
                     user = created.toObject();
                 } catch (createErr) {
                     if (createErr.code === 11000) {
-                        user =
-                            (await User.findOne({ authId }).lean()) ||
-                            (await User.findOne({ email: email.toLowerCase() }).lean());
-                    } else {
-                        throw createErr;
-                    }
+                        user = await User.findOne({ authId }).lean()
+                            || await User.findOne({ email: email.toLowerCase() }).lean();
+                    } else throw createErr;
                 }
             }
         }
 
-        if (!user)          return res.status(500).json(failure("Could not resolve user from session"));
-        if (!user.isActive) return res.status(403).json(failure("Your account has been deactivated"));
+        if (!user)          return res.status(500).json(failure("Could not resolve user"));
+        if (!user.isActive) return res.status(403).json(failure("Account deactivated"));
 
         req.user = user;
         next();
