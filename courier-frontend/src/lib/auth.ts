@@ -1,7 +1,8 @@
-import { createAuthClient } from 'better-auth/react';
+import { createAuthClient } from "better-auth/react";
 
-// In production, API goes through the Vercel rewrite (same-origin).
-// In dev, it goes directly to the backend.
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  // same origin as frontend — goes through vercel rewrite proxy to backend
+  baseURL: import.meta.env.VITE_API_URL || "https://subak-raftar.vercel.app",
 });
+
+export const { signIn, signUp, signOut, useSession } = authClient;

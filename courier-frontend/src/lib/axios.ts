@@ -1,27 +1,28 @@
-import axios from 'axios';
+import axios from "axios";
 
-// In production, API calls go through the Vercel rewrite (/api/* → backend)
-// so baseURL must be empty (same-origin). In dev, it points to localhost:5000.
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: import.meta.env.VITE_API_URL || "https://subak-raftar.vercel.app",
   withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-axiosInstance.interceptors.request.use(
-  (config) => {
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+axiosInstance.interceptors.request.use((config) => {
+  console.log(`[Axios] ➡️  ${config.method?.toUpperCase()} ${config.url}`, config.params || "");
+  return config;
+});
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const message =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      'An unexpected error occurred';
+  (res) => {
+    console.log(`[Axios] ✅ ${res.status} ${res.config.url}`, res.data);
+    return res;
+  },
+  (err) => {
+    const status = err.response?.status;
+    const url = err.config?.url;
+    const message = err.response?.data?.message || err.message;
+    console.log(`[Axios] ❌ ${status} ${url} — ${message}`);
     return Promise.reject(new Error(message));
   }
 );
