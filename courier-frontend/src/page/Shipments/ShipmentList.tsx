@@ -58,7 +58,6 @@ const ShipmentList: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[ShipmentList] 🔍 Searching for:', searchInput);
     handleFilterChange({ search: searchInput });
   };
 
@@ -77,7 +76,6 @@ const ShipmentList: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / filters.limit));
 
   const handleSaveSheet = () => {
-    console.log('[ShipmentList] 💾 Exporting', list.length, 'shipments to Excel...');
     exportShipmentsToExcel(list, `shipments-page-${filters.page}.xlsx`);
   };
 

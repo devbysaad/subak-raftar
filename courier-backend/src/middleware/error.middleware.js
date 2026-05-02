@@ -1,7 +1,7 @@
 import { failure } from "../utils/response.utils.js";
 
 const errorMiddleware = (err, req, res, next) => {
-    console.error(`[${req.method}] ${req.path}`, err.message);
+
 
     if (err.name === "ValidationError") {
         const errors = Object.values(err.errors).map((e) => e.message);

@@ -18,7 +18,6 @@ const AppInit: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log(`[Page Change] 📄 Navigated to: ${location.pathname}${location.search}`);
   }, [location]);
 
   return <>{children}</>;

@@ -9,7 +9,6 @@ import { rootSaga }     from './saga/rootSaga';
 const sagaMiddleware = createSagaMiddleware();
 
 const customLogger = (store: any) => (next: any) => (action: any) => {
-  console.log(`[Redux Action] 🚀 ${action.type}`, action.payload || '');
   return next(action);
 };
 

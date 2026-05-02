@@ -43,7 +43,6 @@ const ShipmentDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      console.log('[ShipmentDetail] 📦 Loading shipment:', id);
       dispatch(fetchShipmentRequest(id));
       dispatch(fetchShipmentHistoryRequest(id));
     }
@@ -55,7 +54,6 @@ const ShipmentDetail: React.FC = () => {
 
   const handleCancelConfirm = () => {
     if (!id) return;
-    console.log('[ShipmentDetail] ❌ Cancelling shipment:', id);
     dispatch(cancelShipmentRequest(id));
     setShowCancelDialog(false);
   };

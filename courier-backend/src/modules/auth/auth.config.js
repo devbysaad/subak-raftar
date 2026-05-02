@@ -1,5 +1,4 @@
 import { MongoClient } from "mongodb";
-import { bearer } from "better-auth/plugins";
 
 let _auth   = null;
 let _client = null;
@@ -9,6 +8,7 @@ export const getAuth = async () => {
 
     const { betterAuth }     = await import("better-auth");
     const { mongodbAdapter } = await import("better-auth/adapters/mongodb");
+    const { bearer }         = await import("better-auth/plugins");
 
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) throw new Error("MONGO_URI not set");

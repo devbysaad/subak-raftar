@@ -34,7 +34,6 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    console.log(`[Button Click] 🖱️ Clicked button:`, typeof children === 'string' ? children : 'Icon/Element Button');
     if (onClick) onClick(e);
   };
 

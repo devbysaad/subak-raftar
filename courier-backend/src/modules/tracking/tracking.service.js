@@ -28,19 +28,19 @@ export const pollShipment = async (shipment) => {
         await log(shipment._id, result.status, null, `Auto-updated by tracking cron from ${shipment.provider}`);
         await onStatusChange(shipment, result.status, settings);
     } catch (err) {
-        console.error(`[Tracking] Failed to poll shipment ${shipment._id}:`, err.message);
+
     }
 };
 
 export const pollAllActive = async () => {
-    console.log("[Tracking] Polling active shipments...");
+
 
     const shipments = await Shipment.find({
         status:   { $in: ACTIVE_STATUSES },
         provider: { $ne: "self" },
     }).lean();
 
-    console.log(`[Tracking] Found ${shipments.length} active shipments to poll`);
+
 
     const BATCH_SIZE = 10;
     for (let i = 0; i < shipments.length; i += BATCH_SIZE) {
@@ -48,5 +48,5 @@ export const pollAllActive = async () => {
         await Promise.allSettled(batch.map(pollShipment));
     }
 
-    console.log("[Tracking] Poll complete");
+
 };

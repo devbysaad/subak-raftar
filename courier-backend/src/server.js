@@ -17,7 +17,7 @@ const getApp = async () => {
 if (process.env.NODE_ENV !== "production") {
     const PORT     = process.env.PORT || 5000;
     const localApp = await getApp();
-    localApp.listen(PORT, () => console.log(`[Server] Running on port ${PORT}`));
+    localApp.listen(PORT);
 }
 
 export default async (req, res) => {

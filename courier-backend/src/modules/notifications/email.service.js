@@ -18,9 +18,9 @@ export const sendEmail = async ({ to, subject, html }) => {
             subject,
             html,
         });
-        console.log(`[Email] Sent to ${to} — ${subject}`);
+
     } catch (err) {
-        console.error(`[Email] Failed to send to ${to}:`, err.message);
+
     }
 };
 

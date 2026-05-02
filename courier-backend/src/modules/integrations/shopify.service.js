@@ -30,7 +30,7 @@ const mapOrderToShipment = (order) => ({
 export const handleFulfillmentWebhook = async (order) => {
     const exists = await Shipment.findOne({ shopifyOrderId: String(order.id) });
     if (exists) {
-        console.log(`[Shopify] Shipment already exists for order ${order.id}`);
+
         return exists;
     }
 
@@ -55,6 +55,6 @@ export const handleFulfillmentWebhook = async (order) => {
     });
 
     await log(shipment._id, "booked", null, `Auto-created from Shopify order #${order.order_number}`);
-    console.log(`[Shopify] Shipment created for order ${order.id}`);
+
     return shipment;
 };

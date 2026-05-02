@@ -84,11 +84,9 @@ export default function BookParcel() {
     setParseError(null);
     setUploadResult(null);
     setParsing(true);
-    console.log('[Excel] 📂 File selected:', file.name);
     try {
       const rows = await parseExcelFile(file);
       setExcelRows(rows);
-      console.log(`[Excel] ✅ Parsed ${rows.length} rows. Valid: ${rows.filter(r => r._valid).length}`);
     } catch (err: any) {
       setParseError(err.message);
     } finally {
@@ -100,7 +98,6 @@ export default function BookParcel() {
     const valid = excelRows.filter(r => r._valid);
     if (!valid.length) return;
     setUploading(true);
-    console.log('[Excel] 📤 Uploading', valid.length, 'shipments...');
     try {
       const payload = valid.map(r => ({
         receiver: {
@@ -118,7 +115,6 @@ export default function BookParcel() {
       const res = await axiosInstance.post(API.SHIPMENTS.BULK, payload);
       const result = res.data?.data;
       setUploadResult({ created: result?.created ?? 0, failed: result?.failed ?? 0 });
-      console.log('[Excel] ✅ Bulk upload complete:', result);
     } catch (err: any) {
       setParseError(err.message || 'Upload failed');
     } finally {
@@ -128,7 +124,6 @@ export default function BookParcel() {
 
   const handleSaveSheet = () => {
     if (!excelRows.length) return;
-    console.log('[Excel] 💾 Saving sheet...');
     exportShipmentsToExcel(excelRows.map(r => ({
       providerTrackingNo: '(pending)',
       receiver: { name: r.receiverName, phone: r.receiverPhone, city: r.receiverCity },
@@ -143,7 +138,6 @@ export default function BookParcel() {
   const handleBulkPrint = () => {
     if (!excelRows.length) return;
     setPrinting(true);
-    console.log('[Print] 🖨️ Opening print window...');
     const printWindow = window.open('', '_blank');
     if (!printWindow) { setPrinting(false); return; }
 
@@ -181,7 +175,6 @@ export default function BookParcel() {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[BookParcel] 📦 Submitting manual booking form...');
     dispatch(createShipmentRequest({
       receiver: {
         name:    form.receiverName,
