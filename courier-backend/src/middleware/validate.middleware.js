@@ -1,5 +1,3 @@
-import { failure } from "../utils/response.utils.js";
-
 const validate = (schema) => (req, res, next) => {
     const result = schema.safeParse(req.body);
 
@@ -8,10 +6,14 @@ const validate = (schema) => (req, res, next) => {
             field:   e.path.join("."),
             message: e.message,
         }));
-        return res.status(400).json(failure("Validation failed", errors));
+        return res.status(400).json({
+            success: false,
+            message: "Validation failed",
+            errors,
+        });
     }
 
-    req.body = result.data;
+    req.body = result.data; // replace with sanitized + coerced data
     next();
 };
 

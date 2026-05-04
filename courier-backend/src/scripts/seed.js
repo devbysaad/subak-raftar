@@ -8,6 +8,8 @@ import User from "../modules/users/user.model.js";
 import Shipment from "../modules/shipments/shipment.model.js";
 import StatusHistory from "../modules/status-history/statusHistory.model.js";
 import Settings from "../modules/settings/settings.model.js";
+import LoadSheet from "../modules/loadsheets/loadsheet.model.js";
+import Complaint from "../modules/complaints/complaint.model.js";
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) { console.error("MONGO_URI not set"); process.exit(1); }
@@ -45,90 +47,132 @@ async function seed() {
 
     await mongoose.connect(MONGO_URI);
 
-    console.log("🗑️   Clearing all collections...");
-    await Promise.all([
-        User.deleteMany({}),
-        Shipment.deleteMany({}),
-        StatusHistory.deleteMany({}),
-        Settings.deleteMany({}),
-        db.collection("user").deleteMany({}),
-        db.collection("session").deleteMany({}),
-        db.collection("account").deleteMany({}),
-        db.collection("verification").deleteMany({}),
-    ]);
-    console.log("✅  All collections cleared.\n");
+    try {
+        console.log("🗑️   Clearing all collections...");
+        await User.deleteMany({});
+        await Shipment.deleteMany({});
+        await StatusHistory.deleteMany({});
+        await Settings.deleteMany({});
+        await LoadSheet.deleteMany({});
+        await Complaint.deleteMany({});
+        // better-auth native collections
+        await db.collection("session").deleteMany({});
+        await db.collection("account").deleteMany({});
+        await db.collection("verification").deleteMany({});
+        console.log("✅  All collections cleared.\n");
 
-    console.log("🔐  Creating admin account...");
-    const adminAuthId = await createAuthUser({ name: ADMIN_NAME, email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
-    const adminUser   = await User.findOneAndUpdate(
-        { email: ADMIN_EMAIL },
-        { $set: { authId: adminAuthId, role: "admin", isActive: true } },
-        { new: true }
-    ).lean();
-    console.log(`✅  Admin: ${adminUser.email} (role: admin)\n`);
-
-    console.log("👥  Creating employees...");
-    const empDocs = [];
-    for (const emp of EMPLOYEES) {
-        const empAuthId = await createAuthUser({ name: emp.name, email: emp.email, password: emp.password });
-        const doc = await User.findOneAndUpdate(
-            { email: emp.email },
-            { $set: { authId: empAuthId, role: "employee", isActive: true } },
+        console.log("🔐  Creating admin account...");
+        const adminAuthId = await createAuthUser({ name: ADMIN_NAME, email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+        const adminUser   = await User.findOneAndUpdate(
+            { email: ADMIN_EMAIL },
+            { $set: { authId: adminAuthId, role: "admin", isActive: true } },
             { new: true }
         ).lean();
-        empDocs.push(doc);
-        console.log(`   ✅  ${doc.name}`);
+        console.log(`✅  Admin: ${adminUser.email} (role: admin)\n`);
+
+        console.log("👥  Creating employees...");
+        const empDocs = [];
+        for (const emp of EMPLOYEES) {
+            const empAuthId = await createAuthUser({ name: emp.name, email: emp.email, password: emp.password });
+            const doc = await User.findOneAndUpdate(
+                { email: emp.email },
+                { $set: { authId: empAuthId, role: "employee", isActive: true } },
+                { new: true }
+            ).lean();
+            empDocs.push(doc);
+            console.log(`   ✅  ${doc.name}`);
+        }
+
+        console.log("\n📦  Seeding shipments...");
+        const allUsers = [adminUser, ...empDocs];
+        const toInsert = [];
+
+        // Increase shipments to 300 and spread over 1500 days to ensure 50+ monthly invoices
+        for (let i = 0; i < 300; i++) {
+            const status    = pick(STATUSES);
+            const provider  = pick(PROVIDERS);
+            const isCOD     = Math.random() > 0.5;
+            const createdAt = new Date(Date.now() - rand(0, 1500) * 86400000);
+            toInsert.push({
+                createdBy:          pick(allUsers)._id,
+                receiver:           addr(),
+                weight:             parseFloat((Math.random() * 9 + 0.5).toFixed(1)),
+                itemType:           pick(ITEMS),
+                quantity:           rand(1, 5),
+                provider,
+                providerTrackingNo: tNo(provider),
+                status,
+                isCOD,
+                codAmount:          isCOD ? rand(500, 15000) : 0,
+                codStatus:          isCOD ? pick(["pending", "collected", "remitted"]) : "pending",
+                notes:              Math.random() > 0.7 ? "Handle with care" : "",
+                createdAt,
+                updatedAt:          createdAt,
+            });
+        }
+
+        const inserted = await Shipment.insertMany(toInsert);
+        console.log(`✅  ${inserted.length} shipments created.`);
+
+        console.log("\n🕓  Seeding status history...");
+        await StatusHistory.insertMany(
+            inserted.map((s) => ({
+                shipmentId: s._id,
+                status:     s.status,
+                updatedBy:  s.createdBy,
+                note:       "Seeded initial status",
+                createdAt:  s.createdAt,
+            }))
+        );
+        console.log(`✅  ${inserted.length} history entries created.`);
+
+        console.log("\n📄  Seeding load sheets...");
+        const loadSheetsToInsert = [];
+        for (let i = 0; i < 60; i++) {
+            const sheetShipments = [];
+            const numParcels = rand(1, 5);
+            for(let j = 0; j < numParcels; j++) {
+                sheetShipments.push(pick(inserted)._id);
+            }
+            loadSheetsToInsert.push({
+                loadSheetNo: `LS-${Date.now()}-${i}-${rand(100,999)}`,
+                parcelIds: [...new Set(sheetShipments)], // Ensure unique parcels per sheet
+                createdBy: pick(allUsers)._id,
+            });
+        }
+        await LoadSheet.insertMany(loadSheetsToInsert);
+        console.log(`✅  ${loadSheetsToInsert.length} load sheets created.`);
+
+        console.log("\n⚠️  Seeding complaints...");
+        const complaintsToInsert = [];
+        const complaintStatuses = ["open", "in_progress", "resolved", "closed"];
+        for (let i = 0; i < 60; i++) {
+            const shipment = pick(inserted);
+            complaintsToInsert.push({
+                parcelNo: shipment.providerTrackingNo,
+                shipmentId: shipment._id,
+                status: pick(complaintStatuses),
+                remarks: "Customer complained about " + pick(["delay", "behavior", "damaged item", "wrong item"]),
+                rStatus: "open",
+                cStatus: "open",
+                createdBy: pick(allUsers)._id,
+            });
+        }
+        await Complaint.insertMany(complaintsToInsert);
+        console.log(`✅  ${complaintsToInsert.length} complaints created.`);
+
+        await Settings.create([{
+            companyName: "Subak Raftar",
+            email:       ADMIN_EMAIL,
+            phone:       "0311-1234567",
+            address:     "Office #12, DHA Phase 6, Karachi",
+        }]);
+        console.log("\n✅  Settings seeded.");
+
+    } catch (err) {
+        console.error("❌  Seed process failed.");
+        throw err;
     }
-
-    console.log("\n📦  Seeding shipments...");
-    const allUsers = [adminUser, ...empDocs];
-    const toInsert = [];
-
-    for (let i = 0; i < 40; i++) {
-        const status    = pick(STATUSES);
-        const provider  = pick(PROVIDERS);
-        const isCOD     = Math.random() > 0.5;
-        const createdAt = new Date(Date.now() - rand(0, 30) * 86400000);
-        toInsert.push({
-            createdBy:          pick(allUsers)._id,
-            receiver:           addr(),
-            weight:             parseFloat((Math.random() * 9 + 0.5).toFixed(1)),
-            itemType:           pick(ITEMS),
-            quantity:           rand(1, 5),
-            provider,
-            providerTrackingNo: tNo(provider),
-            status,
-            isCOD,
-            codAmount:          isCOD ? rand(500, 15000) : 0,
-            codStatus:          isCOD ? pick(["pending", "collected", "remitted"]) : "pending",
-            notes:              Math.random() > 0.7 ? "Handle with care" : "",
-            createdAt,
-            updatedAt:          createdAt,
-        });
-    }
-
-    const inserted = await Shipment.insertMany(toInsert);
-    console.log(`✅  ${inserted.length} shipments created.`);
-
-    console.log("\n🕓  Seeding status history...");
-    await StatusHistory.insertMany(
-        inserted.map((s) => ({
-            shipmentId: s._id,
-            status:     s.status,
-            updatedBy:  s.createdBy,
-            note:       "Seeded initial status",
-            createdAt:  s.createdAt,
-        }))
-    );
-    console.log(`✅  ${inserted.length} history entries created.`);
-
-    await Settings.create({
-        companyName: "Subak Raftar",
-        email:       ADMIN_EMAIL,
-        phone:       "0311-1234567",
-        address:     "Office #12, DHA Phase 6, Karachi",
-    });
-    console.log("\n✅  Settings seeded.");
 
     await mongoose.disconnect();
     await client.close();

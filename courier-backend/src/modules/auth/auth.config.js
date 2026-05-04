@@ -31,6 +31,7 @@ export const getAuth = async () => {
             "https://subak-raftar.vercel.app",
             "https://subak-raftar-server.vercel.app",
             "http://localhost:3000",
+            "http://localhost:3001",
             "http://localhost:5000",
             "http://localhost:5173",
         ],

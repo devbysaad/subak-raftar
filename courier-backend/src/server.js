@@ -17,7 +17,17 @@ const getApp = async () => {
 if (process.env.NODE_ENV !== "production") {
     const PORT     = process.env.PORT || 5000;
     const localApp = await getApp();
-    localApp.listen(PORT);
+    const server   = localApp.listen(PORT, () => {
+        console.log(`🚀  Server running on http://localhost:${PORT}`);
+    });
+    server.on("error", (err) => {
+        if (err.code === "EADDRINUSE") {
+            console.error(`❌  Port ${PORT} is already in use. Kill the process first:\n    npx kill-port ${PORT}`);
+        } else {
+            console.error("❌  Server error:", err.message);
+        }
+        process.exit(1);
+    });
 }
 
 export default async (req, res) => {
